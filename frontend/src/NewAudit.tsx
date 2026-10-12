@@ -23,6 +23,13 @@ type ChecklistImportResponse = {
 
 type ImportStatus = 'idle' | 'loading' | 'success' | 'error'
 
+type NewAuditProps = {
+  username: string
+  csrfToken: string
+  onLogout: () => void | Promise<void>
+  onUnauthorized: () => void
+}
+
 const inputClass =
   'h-11 w-full rounded-[8px] border border-[#d6dfec] bg-white px-4 text-sm text-[#263d64] outline-none transition placeholder:text-[#8a9ab1] focus:border-[#42658f] focus:ring-2 focus:ring-[#42658f]/20'
 
@@ -61,7 +68,12 @@ function EyeIcon({ crossed = false }: { crossed?: boolean }) {
   )
 }
 
-function NewAudit() {
+function NewAudit({
+  username,
+  csrfToken,
+  onLogout,
+  onUnauthorized,
+}: NewAuditProps) {
   const [selectedFileName, setSelectedFileName] = useState('')
   const [importStatus, setImportStatus] = useState<ImportStatus>('idle')
   const [importError, setImportError] = useState('')
@@ -87,6 +99,8 @@ function NewAudit() {
     try {
       const response = await fetch('/api/checklists/import', {
         method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRF-Token': csrfToken },
         body: formData,
       })
 
@@ -94,6 +108,7 @@ function NewAudit() {
         const errorBody = (await response.json().catch(() => null)) as
           | { detail?: string }
           | null
+        if (response.status === 401) onUnauthorized()
         throw new Error(
           errorBody?.detail ?? 'No fue posible importar el checklist.',
         )
@@ -115,7 +130,7 @@ function NewAudit() {
   }
 
   return (
-    <AppShell activePage="new-audit">
+    <AppShell activePage="new-audit" username={username} onLogout={onLogout}>
       <main className="px-5 py-8 sm:px-8 lg:px-10 lg:py-9">
         <div className="mx-auto max-w-[1120px]">
           <header>

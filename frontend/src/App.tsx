@@ -1,24 +1,111 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import Dashboard from './Dashboard'
 import NewAudit from './NewAudit'
+import { ApiError, login, logout, restoreSession } from './auth'
+import type { AuthState } from './auth'
+
+type SessionStatus = 'loading' | 'guest' | 'authenticated' | 'unavailable'
 
 function App() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [notice, setNotice] = useState('')
-  const developmentPath = import.meta.env.DEV ? window.location.pathname : ''
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [sessionStatus, setSessionStatus] = useState<SessionStatus>('loading')
+  const [authState, setAuthState] = useState<AuthState | null>(null)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    let isCurrent = true
+    restoreSession()
+      .then((session) => {
+        if (!isCurrent) return
+        setAuthState(session)
+        setSessionStatus(session ? 'authenticated' : 'guest')
+        if (!session && window.location.pathname !== '/') {
+          window.history.replaceState({}, '', '/')
+        }
+      })
+      .catch(() => {
+        if (isCurrent) setSessionStatus('unavailable')
+      })
+    return () => {
+      isCurrent = false
+    }
+  }, [])
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setNotice('La autenticación todavía no está conectada.')
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const username = String(formData.get('username') ?? '')
+    const password = String(formData.get('password') ?? '')
+    setNotice('')
+    setIsSubmitting(true)
+
+    try {
+      const session = await login(username, password)
+      setAuthState(session)
+      setSessionStatus('authenticated')
+      window.history.replaceState({}, '', '/dashboard')
+      form.reset()
+    } catch (error) {
+      setNotice(
+        error instanceof ApiError
+          ? error.message
+          : 'No se pudo contactar al servidor de autenticación.',
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  if (developmentPath === '/dashboard') {
-    return <Dashboard />
+  const handleLogout = async () => {
+    if (!authState) return
+    try {
+      await logout(authState.csrf_token)
+      setAuthState(null)
+      setSessionStatus('guest')
+      window.history.replaceState({}, '', '/')
+    } catch (error) {
+      window.alert(
+        error instanceof ApiError
+          ? error.message
+          : 'No se pudo contactar al servidor de autenticación.',
+      )
+    }
   }
 
-  if (developmentPath === '/nueva-auditoria') {
-    return <NewAudit />
+  const handleUnauthorized = () => {
+    setAuthState(null)
+    setSessionStatus('guest')
+    window.history.replaceState({}, '', '/')
+  }
+
+  if (sessionStatus === 'loading') {
+    return (
+      <main className="flex min-h-dvh items-center justify-center bg-[#f4f7fb] font-sans text-sm text-[#687b99]">
+        Comprobando sesión…
+      </main>
+    )
+  }
+
+  if (sessionStatus === 'authenticated' && authState) {
+    if (window.location.pathname === '/nueva-auditoria') {
+      return (
+        <NewAudit
+          username={authState.user.username}
+          csrfToken={authState.csrf_token}
+          onLogout={handleLogout}
+          onUnauthorized={handleUnauthorized}
+        />
+      )
+    }
+    return (
+      <Dashboard
+        username={authState.user.username}
+        onLogout={handleLogout}
+      />
+    )
   }
 
   return (
@@ -53,6 +140,8 @@ function App() {
               type="text"
               autoComplete="username"
               placeholder="ej. auditor_academico"
+              required
+              maxLength={100}
               className="h-11 w-full rounded-[10px] border border-[#d6dfec] bg-white px-4 text-[15px] text-[#263d64] outline-none transition placeholder:text-[#687b99] focus:border-[#42658f] focus:ring-2 focus:ring-[#42658f]/20"
             />
           </div>
@@ -70,6 +159,8 @@ function App() {
                 name="password"
                 type={isPasswordVisible ? 'text' : 'password'}
                 autoComplete="current-password"
+                required
+                maxLength={1024}
                 className="h-11 w-full rounded-[10px] border border-[#d6dfec] bg-white px-4 pr-11 text-[15px] text-[#263d64] outline-none transition focus:border-[#42658f] focus:ring-2 focus:ring-[#42658f]/20"
               />
               <button
@@ -95,13 +186,18 @@ function App() {
 
           <button
             type="submit"
+            disabled={isSubmitting || sessionStatus === 'unavailable'}
             className="mt-7 h-11 w-full rounded-[10px] bg-[#294469] text-[15px] font-semibold text-white outline-none transition hover:bg-[#203957] focus-visible:ring-2 focus-visible:ring-[#294469] focus-visible:ring-offset-2 active:bg-[#192f4b]"
           >
-            Iniciar sesión
+            {isSubmitting ? 'Iniciando…' : 'Iniciar sesión'}
           </button>
 
           <div className="mt-3 min-h-5 text-center" aria-live="polite" role="status">
-            {notice && <p className="text-xs text-[#687b99]">{notice}</p>}
+            {(notice || sessionStatus === 'unavailable') && (
+              <p className="text-xs text-[#687b99]">
+                {notice || 'No fue posible comprobar la sesión. Recargue para volver a intentar.'}
+              </p>
+            )}
           </div>
         </form>
 

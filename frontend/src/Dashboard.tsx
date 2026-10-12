@@ -31,9 +31,14 @@ function PlusIcon() {
   )
 }
 
-function Dashboard() {
+type DashboardProps = {
+  username: string
+  onLogout: () => void | Promise<void>
+}
+
+function Dashboard({ username, onLogout }: DashboardProps) {
   return (
-    <AppShell activePage="dashboard">
+    <AppShell activePage="dashboard" username={username} onLogout={onLogout}>
       <main className="px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
         <div className="mx-auto max-w-[1120px]">
           <div className="flex flex-wrap items-start justify-between gap-4">

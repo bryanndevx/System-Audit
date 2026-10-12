@@ -4,10 +4,13 @@ from io import BytesIO
 from pathlib import Path
 from zipfile import BadZipFile
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from pydantic import BaseModel
+
+from app.auth import require_csrf
+from app.sessions import AuthenticatedSession
 
 SHEET_NAME = "Checklist Maestro"
 EXPECTED_HEADERS = (
@@ -184,7 +187,11 @@ def parse_checklist(content: bytes, file_name: str) -> ChecklistImportado:
     response_model=ChecklistImportado,
     status_code=status.HTTP_200_OK,
 )
-async def import_checklist(file: UploadFile = File(...)) -> ChecklistImportado:
+async def import_checklist(
+    file: UploadFile = File(...),
+    authenticated_session: AuthenticatedSession = Depends(require_csrf),
+) -> ChecklistImportado:
+    del authenticated_session
     file_name = Path(file.filename or "").name
     if not file_name or Path(file_name).suffix.casefold() != ".xlsx":
         raise HTTPException(

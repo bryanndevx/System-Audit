@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 type AppShellProps = {
   activePage: 'dashboard' | 'new-audit'
   children: ReactNode
+  username: string
+  onLogout: () => void | Promise<void>
 }
 
 function HomeIcon() {
@@ -36,7 +38,7 @@ const navigationClass = (isActive: boolean) =>
     isActive ? 'bg-[#f4f7fb] text-[#263d64]' : 'text-white/90'
   }`
 
-function AppShell({ activePage, children }: AppShellProps) {
+function AppShell({ activePage, children, username, onLogout }: AppShellProps) {
   const mobilePageLabel = activePage === 'dashboard' ? 'Dashboard' : 'Nueva auditoría'
 
   return (
@@ -66,13 +68,12 @@ function AppShell({ activePage, children }: AppShellProps) {
         <div className="mt-auto px-8 pb-8 text-[#8495ad]">
           <button
             type="button"
-            disabled
-            title="No existe una sesión real"
-            className="cursor-not-allowed text-[15px]"
+            onClick={onLogout}
+            className="text-[15px] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
             Cerrar sesión
           </button>
-          <p className="mt-7 text-xs">Interfaz demostrativa</p>
+          <p className="mt-7 text-xs">Sesión autenticada</p>
         </div>
       </aside>
 
@@ -90,8 +91,8 @@ function AppShell({ activePage, children }: AppShellProps) {
 
             <div className="flex items-center gap-3 text-right">
               <div className="hidden sm:block">
-                <p className="text-sm font-medium text-[#263d64]">Usuario de demostración</p>
-                <p className="text-xs text-[#687b99]">Sin sesión real</p>
+                <p className="text-sm font-medium text-[#263d64]">{username}</p>
+                <p className="text-xs text-[#687b99]">Sesión activa</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#314a70] text-white">
                 <UserIcon />
