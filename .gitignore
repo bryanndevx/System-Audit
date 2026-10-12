@@ -1,0 +1,23 @@
+# Claves y entornos locales
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+# Frontend y artefactos
+node_modules/
+dist/
+build/
+coverage/
+# Archivos de entorno
+.DS_Store
+.vscode/settings.json
+# Datos y reportes locales (muestras reales o confidenciales)
+local-data/
+reportes-locales/
