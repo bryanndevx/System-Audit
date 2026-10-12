@@ -2,6 +2,27 @@ import { useState } from 'react'
 import type { ChangeEvent } from 'react'
 import AppShell from './AppShell'
 
+type ImportedActivity = {
+  numero: string
+  actividad: string
+  entregable_esperado: string | null
+  prioridad: string | null
+}
+
+type ImportedPhase = {
+  nombre: string
+  actividades: ImportedActivity[]
+}
+
+type ChecklistImportResponse = {
+  nombre_archivo: string
+  cantidad_fases: number
+  cantidad_actividades: number
+  fases: ImportedPhase[]
+}
+
+type ImportStatus = 'idle' | 'loading' | 'success' | 'error'
+
 const inputClass =
   'h-11 w-full rounded-[8px] border border-[#d6dfec] bg-white px-4 text-sm text-[#263d64] outline-none transition placeholder:text-[#8a9ab1] focus:border-[#42658f] focus:ring-2 focus:ring-[#42658f]/20'
 
@@ -42,10 +63,55 @@ function EyeIcon({ crossed = false }: { crossed?: boolean }) {
 
 function NewAudit() {
   const [selectedFileName, setSelectedFileName] = useState('')
+  const [importStatus, setImportStatus] = useState<ImportStatus>('idle')
+  const [importError, setImportError] = useState('')
+  const [importedChecklist, setImportedChecklist] =
+    useState<ChecklistImportResponse | null>(null)
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSelectedFileName(event.target.files?.[0]?.name ?? '')
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    setSelectedFileName(file?.name ?? '')
+    setImportedChecklist(null)
+    setImportError('')
+
+    if (!file) {
+      setImportStatus('idle')
+      return
+    }
+
+    setImportStatus('loading')
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch('/api/checklists/import', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorBody = (await response.json().catch(() => null)) as
+          | { detail?: string }
+          | null
+        throw new Error(
+          errorBody?.detail ?? 'No fue posible importar el checklist.',
+        )
+      }
+
+      const result = (await response.json()) as ChecklistImportResponse
+      setImportedChecklist(result)
+      setImportStatus('success')
+    } catch (error) {
+      setImportStatus('error')
+      setImportError(
+        error instanceof TypeError
+          ? 'No se pudo contactar al servidor de importación.'
+          : error instanceof Error
+          ? error.message
+          : 'No fue posible importar el checklist.',
+      )
+    }
   }
 
   return (
@@ -70,26 +136,38 @@ function NewAudit() {
                 <label className="mt-5 flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-lg bg-[#edf3ff] px-5 text-center outline-none transition hover:bg-[#e7effc] focus-within:ring-2 focus-within:ring-[#42658f]">
                   <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#3568ec]"><UploadIcon /></span>
                   <span className="mt-3 text-[15px] font-semibold text-[#263d64]">Seleccionar archivo .xlsx</span>
-                  <span className="mt-1 text-xs text-[#687b99]">La lectura y validación del contenido está pendiente</span>
-                  <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={handleFileChange} className="sr-only" />
+                  <span className="mt-1 text-xs text-[#687b99]">Se validará la hoja Checklist Maestro</span>
+                  <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={handleFileChange} disabled={importStatus === 'loading'} className="sr-only" />
                 </label>
 
                 <div className="mt-4 rounded-lg bg-[#edf3ff] p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="min-w-0 truncate text-sm font-semibold text-[#263d64]">{selectedFileName || 'Sin archivo seleccionado'}</p>
-                    <span className="shrink-0 rounded bg-white px-2 py-1 text-xs text-[#687b99]">Pendiente</span>
+                    <p className="min-w-0 truncate text-sm font-semibold text-[#263d64]">{importedChecklist?.nombre_archivo || selectedFileName || 'Sin archivo seleccionado'}</p>
+                    <span className={`shrink-0 rounded bg-white px-2 py-1 text-xs ${importStatus === 'success' ? 'text-[#167052]' : importStatus === 'error' ? 'text-[#a33b32]' : 'text-[#687b99]'}`}>
+                      {importStatus === 'loading'
+                        ? 'Validando…'
+                        : importStatus === 'success'
+                          ? 'Validado'
+                          : importStatus === 'error'
+                            ? 'Error'
+                            : 'Pendiente'}
+                    </span>
                   </div>
                   <dl className="mt-3 grid grid-cols-2 gap-3 rounded-md bg-white p-3">
                     <div>
                       <dt className="text-[11px] tracking-[0.04em] text-[#687b99] uppercase">Fases detectadas</dt>
-                      <dd className="mt-1 text-lg font-semibold text-[#263d64]">—</dd>
+                      <dd className="mt-1 text-lg font-semibold text-[#263d64]">{importedChecklist?.cantidad_fases ?? '—'}</dd>
                     </div>
                     <div>
                       <dt className="text-[11px] tracking-[0.04em] text-[#687b99] uppercase">Actividades</dt>
-                      <dd className="mt-1 text-lg font-semibold text-[#263d64]">—</dd>
+                      <dd className="mt-1 text-lg font-semibold text-[#263d64]">{importedChecklist?.cantidad_actividades ?? '—'}</dd>
                     </div>
                   </dl>
-                  <p className="mt-3 text-xs text-[#687b99]">Los valores se mostrarán cuando exista importación y validación real del Excel.</p>
+                  <div className="mt-3 min-h-4 text-xs" aria-live="polite" role="status">
+                    {importStatus === 'success' && <p className="text-[#167052]">Checklist importado y estructura validada.</p>}
+                    {importStatus === 'error' && <p className="text-[#a33b32]">{importError}</p>}
+                    {importStatus === 'idle' && <p className="text-[#687b99]">Seleccione un archivo para obtener los conteos reales.</p>}
+                  </div>
                 </div>
               </div>
             </section>
