@@ -1,13 +1,24 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import Dashboard from './Dashboard'
+import NewAudit from './NewAudit'
 
 function App() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [notice, setNotice] = useState('')
+  const developmentPath = import.meta.env.DEV ? window.location.pathname : ''
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setNotice('La autenticación todavía no está conectada.')
+  }
+
+  if (developmentPath === '/dashboard') {
+    return <Dashboard />
+  }
+
+  if (developmentPath === '/nueva-auditoria') {
+    return <NewAudit />
   }
 
   return (
