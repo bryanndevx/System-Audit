@@ -85,6 +85,17 @@ class ParseChecklistTests(unittest.TestCase):
         with self.assertRaisesRegex(ChecklistValidationError, "no tiene una fase asociada"):
             parse_checklist(content, "checklist.xlsx")
 
+    def test_rejects_duplicate_activity_identifiers(self):
+        content = build_workbook(
+            [
+                ("Fase 1", "2.1", "Inventario", None, None, None, None, None),
+                (None, "2.1", "Otra actividad", None, None, None, None, None),
+            ]
+        )
+
+        with self.assertRaisesRegex(ChecklistValidationError, "está duplicado"):
+            parse_checklist(content, "checklist.xlsx")
+
     def test_rejects_invalid_workbook(self):
         with self.assertRaisesRegex(ChecklistValidationError, "no es un libro Excel"):
             parse_checklist(b"contenido invalido", "checklist.xlsx")

@@ -1,0 +1,125 @@
+{
+  "uso": "Referencia manual exclusiva para validar localmente el motor de las actividades 2.1, 2.3, 2.6, 2.7 y 2.8 en un entorno controlado; no constituye evidencia de auditorías futuras.",
+  "es_evidencia_auditoria": false,
+  "base_datos": "auditoria_prueba",
+  "esquema": "audit_fixture",
+  "medicion_manual": {
+    "fecha_utc": null,
+    "tamano_base_bytes": 8492735,
+    "relaciones": {
+      "audit_fixture.catalog_items": {
+        "tipo": "tabla_ordinaria",
+        "es_particion": false,
+        "datos_bytes": 16384,
+        "indices_bytes": 32768,
+        "total_bytes": 49152
+      },
+      "audit_fixture.technical_events": {
+        "tipo": "tabla_particionada",
+        "es_particion": false,
+        "datos_bytes": 0,
+        "indices_bytes": 0,
+        "total_bytes": 0
+      },
+      "audit_fixture.technical_events_2025": {
+        "tipo": "tabla_ordinaria",
+        "es_particion": true,
+        "datos_bytes": 16384,
+        "indices_bytes": 16384,
+        "total_bytes": 32768
+      },
+      "audit_fixture.technical_events_2026": {
+        "tipo": "tabla_ordinaria",
+        "es_particion": true,
+        "datos_bytes": 16384,
+        "indices_bytes": 16384,
+        "total_bytes": 32768
+      }
+    }
+  },
+  "agregados_particiones": {
+    "audit_fixture.technical_events": {
+      "particiones_fisicas": 2,
+      "datos_bytes": 32768,
+      "indices_bytes": 32768,
+      "total_bytes": 65536
+    }
+  },
+  "referencias_actividades": {
+    "2.6": {
+      "esquema": "audit_metadata_fixture",
+      "naturaleza_clasificacion": "resultado_esperado_de_reglas_tecnicas",
+      "confirma_proposito_empresarial": false,
+      "tablas": {
+        "audit_metadata_fixture.audit_event_log": {
+          "es_candidata": true,
+          "clasificacion_indicios": "sustentada",
+          "funcion_confirmada": false,
+          "columnas": [
+            "id",
+            "event_at",
+            "actor_id",
+            "action",
+            "old_values",
+            "new_values"
+          ]
+        },
+        "audit_metadata_fixture.trace_named_only": {
+          "es_candidata": true,
+          "clasificacion_indicios": "probable",
+          "funcion_confirmada": false,
+          "columnas": [
+            "id"
+          ]
+        },
+        "audit_metadata_fixture.reference_data": {
+          "es_candidata": false,
+          "columnas": [
+            "id",
+            "label"
+          ]
+        }
+      }
+    },
+    "2.7": {
+      "esquema": "audit_metadata_fixture",
+      "vistas": {
+        "audit_metadata_fixture.audit_event_summary": {
+          "tipo": "vista"
+        },
+        "audit_metadata_fixture.audit_event_daily": {
+          "tipo": "vista_materializada",
+          "esta_poblada": false
+        }
+      }
+    },
+    "2.8": {
+      "esquema": "audit_metadata_fixture",
+      "rutinas": {
+        "fixture_noop": {
+          "tipo": "procedimiento",
+          "lenguaje": "sql"
+        },
+        "normalize_action": {
+          "tipo": "funcion",
+          "lenguaje": "sql"
+        },
+        "preserve_fixture_row": {
+          "tipo": "funcion",
+          "lenguaje": "plpgsql"
+        }
+      },
+      "triggers": {
+        "audit_event_log_before_insert": {
+          "relacion_completa": "audit_metadata_fixture.audit_event_log",
+          "estado_catalogo_manual": "D",
+          "estado_motor_esperado": "deshabilitado",
+          "funcion_asociada": {
+            "esquema": "audit_metadata_fixture",
+            "nombre": "preserve_fixture_row"
+          }
+        }
+      }
+    }
+  }
+}

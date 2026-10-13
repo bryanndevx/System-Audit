@@ -120,6 +120,7 @@ def parse_checklist(content: bytes, file_name: str) -> ChecklistImportado:
         phases: list[FaseImportada] = []
         current_phase: FaseImportada | None = None
         current_phase_key = ""
+        activity_number_rows: dict[str, int] = {}
 
         for row_number, row in enumerate(data_rows, start=header_row + 1):
             values = tuple(row[: len(EXPECTED_HEADERS)])
@@ -155,6 +156,13 @@ def parse_checklist(content: bytes, file_name: str) -> ChecklistImportado:
                 raise ChecklistValidationError(
                     f"La actividad de la fila {row_number} no tiene valor en la columna '#'."
                 )
+            if activity_number in activity_number_rows:
+                first_row = activity_number_rows[activity_number]
+                raise ChecklistValidationError(
+                    f"El identificador de actividad '{activity_number}' está duplicado "
+                    f"en las filas {first_row} y {row_number}."
+                )
+            activity_number_rows[activity_number] = row_number
 
             current_phase.actividades.append(
                 ActividadImportada(

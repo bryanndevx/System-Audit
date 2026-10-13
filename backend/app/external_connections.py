@@ -3,6 +3,8 @@ import ipaddress
 import os
 import re
 import socket
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated
@@ -11,6 +13,7 @@ import psycopg
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field, SecretStr, ValidationError, field_validator
 from psycopg import errors
+from psycopg.pq import TransactionStatus
 
 from app.auth import require_csrf
 from app.sessions import AuthenticatedSession
@@ -268,10 +271,13 @@ async def resolve_allowed_address(
     return str(addresses[0])
 
 
-async def verify_external_connection(
+@asynccontextmanager
+async def open_verified_external_connection(
     connection_request: ExternalConnectionRequest,
     policy: ExternalConnectionPolicy,
-) -> None:
+    *,
+    application_name: str,
+) -> AsyncIterator[psycopg.AsyncConnection]:
     resolved_address = await resolve_allowed_address(
         connection_request.host,
         connection_request.port,
@@ -287,13 +293,15 @@ async def verify_external_connection(
         "password": connection_request.password.get_secret_value(),
         "connect_timeout": CONNECT_TIMEOUT_SECONDS,
         "options": SESSION_OPTIONS,
-        "application_name": "sistema_auditoria_connection_test",
+        "application_name": application_name,
         "sslmode": policy.ssl_mode,
         "autocommit": False,
     }
     if policy.ssl_root_cert:
         connect_parameters["sslrootcert"] = policy.ssl_root_cert
 
+    validation_complete = False
+    consumer_failed = False
     try:
         connection = await psycopg.AsyncConnection.connect(**connect_parameters)
         async with connection.cursor() as cursor:
@@ -322,13 +330,42 @@ async def verify_external_connection(
                 raise InsufficientDatabasePrivilegesError(
                     "El usuario posee atributos elevados no permitidos."
                 )
+        await connection.rollback()
+        validation_complete = True
+        try:
+            yield connection
+        except BaseException:
+            consumer_failed = True
+            raise
     finally:
         if connection is not None and not connection.closed:
-            try:
-                await connection.rollback()
-            except psycopg.Error:
-                pass
+            transaction_status = getattr(
+                getattr(connection, "info", None),
+                "transaction_status",
+                None,
+            )
+            if (
+                not validation_complete
+                or consumer_failed
+                or transaction_status not in {None, TransactionStatus.IDLE}
+            ):
+                try:
+                    await connection.rollback()
+                except psycopg.Error:
+                    pass
             await connection.close()
+
+
+async def verify_external_connection(
+    connection_request: ExternalConnectionRequest,
+    policy: ExternalConnectionPolicy,
+) -> None:
+    async with open_verified_external_connection(
+        connection_request,
+        policy,
+        application_name="sistema_auditoria_connection_test",
+    ):
+        pass
 
 
 @router.post("/test", response_model=ExternalConnectionResponse)
