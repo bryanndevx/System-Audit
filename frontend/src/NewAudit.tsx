@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import type { ChangeEvent } from 'react'
+import { useRef, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import AppShell from './AppShell'
 
 type ImportedActivity = {
@@ -22,6 +22,20 @@ type ChecklistImportResponse = {
 }
 
 type ImportStatus = 'idle' | 'loading' | 'success' | 'error'
+type ConnectionStatus = 'idle' | 'testing' | 'success' | 'error'
+
+type ConnectionFields = {
+  host: string
+  port: string
+  database: string
+  username: string
+  password: string
+}
+
+type ConnectionTestResponse = {
+  verified: boolean
+  message: string
+}
 
 type NewAuditProps = {
   username: string
@@ -80,6 +94,19 @@ function NewAudit({
   const [importedChecklist, setImportedChecklist] =
     useState<ChecklistImportResponse | null>(null)
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const [connectionFields, setConnectionFields] = useState<ConnectionFields>({
+    host: '',
+    port: '',
+    database: '',
+    username: '',
+    password: '',
+  })
+  const [connectionStatus, setConnectionStatus] =
+    useState<ConnectionStatus>('idle')
+  const [connectionMessage, setConnectionMessage] = useState(
+    'Pendiente de comprobación',
+  )
+  const connectionAttempt = useRef(0)
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -125,6 +152,71 @@ function NewAudit({
           : error instanceof Error
           ? error.message
           : 'No fue posible importar el checklist.',
+      )
+    }
+  }
+
+  const handleConnectionFieldChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const field = event.target.name as keyof ConnectionFields
+    connectionAttempt.current += 1
+    setConnectionFields((current) => ({
+      ...current,
+      [field]: event.target.value,
+    }))
+    setConnectionStatus('idle')
+    setConnectionMessage('Pendiente de comprobación')
+  }
+
+  const handleConnectionTest = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const attempt = connectionAttempt.current + 1
+    connectionAttempt.current = attempt
+    setConnectionStatus('testing')
+    setConnectionMessage('Comprobando…')
+
+    try {
+      const response = await fetch('/api/connections/test', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
+        body: JSON.stringify({
+          ...connectionFields,
+          port: Number(connectionFields.port),
+        }),
+      })
+
+      if (!response.ok) {
+        const errorBody = (await response.json().catch(() => null)) as
+          | { detail?: string }
+          | null
+        if (response.status === 401) onUnauthorized()
+        throw new Error(
+          typeof errorBody?.detail === 'string'
+            ? errorBody.detail
+            : 'No fue posible comprobar la conexión.',
+        )
+      }
+
+      const result = (await response.json()) as ConnectionTestResponse
+      if (attempt !== connectionAttempt.current) return
+      setConnectionStatus(result.verified ? 'success' : 'error')
+      setConnectionMessage(
+        result.verified
+          ? result.message
+          : 'No fue posible comprobar la conexión.',
+      )
+    } catch (error) {
+      if (attempt !== connectionAttempt.current) return
+      setConnectionStatus('error')
+      setConnectionMessage(
+        error instanceof TypeError
+          ? 'No se pudo contactar al servidor de comprobación.'
+          : error instanceof Error
+            ? error.message
+            : 'No fue posible comprobar la conexión.',
       )
     }
   }
@@ -193,32 +285,32 @@ function NewAudit({
                 <span className="text-xs text-[#687b99]">Conexión de solo lectura</span>
               </div>
 
-              <form className="p-5" onSubmit={(event) => event.preventDefault()}>
+              <form className="p-5" onSubmit={handleConnectionTest}>
                 <div className="grid gap-5 sm:grid-cols-[1fr_140px]">
                   <label className="block text-sm font-medium text-[#263d64]">
                     Host
-                    <input name="host" type="text" autoComplete="off" placeholder="ej. db.interna.local" className={`${inputClass} mt-2`} />
+                    <input name="host" type="text" autoComplete="off" placeholder="ej. db.interna.local" required maxLength={253} value={connectionFields.host} onChange={handleConnectionFieldChange} className={`${inputClass} mt-2`} />
                   </label>
                   <label className="block text-sm font-medium text-[#263d64]">
                     Puerto
-                    <input name="port" type="text" inputMode="numeric" autoComplete="off" placeholder="5432" className={`${inputClass} mt-2`} />
+                    <input name="port" type="number" min="1" max="65535" inputMode="numeric" autoComplete="off" placeholder="5432" required value={connectionFields.port} onChange={handleConnectionFieldChange} className={`${inputClass} mt-2`} />
                   </label>
                 </div>
 
                 <label className="mt-5 block text-sm font-medium text-[#263d64]">
                   Base de datos
-                  <input name="database" type="text" autoComplete="off" placeholder="Nombre de la base de datos" className={`${inputClass} mt-2`} />
+                  <input name="database" type="text" autoComplete="off" placeholder="Nombre de la base de datos" required maxLength={63} value={connectionFields.database} onChange={handleConnectionFieldChange} className={`${inputClass} mt-2`} />
                 </label>
 
                 <div className="mt-5 grid gap-5 sm:grid-cols-2">
                   <label className="block text-sm font-medium text-[#263d64]">
                     Usuario
-                    <input name="database-user" type="text" autoComplete="off" placeholder="Usuario de solo lectura" className={`${inputClass} mt-2`} />
+                    <input name="username" type="text" autoComplete="off" placeholder="Usuario de solo lectura" required maxLength={63} value={connectionFields.username} onChange={handleConnectionFieldChange} className={`${inputClass} mt-2`} />
                   </label>
                   <label className="block text-sm font-medium text-[#263d64]">
                     Contraseña
                     <span className="relative mt-2 block">
-                      <input name="database-password" type={isPasswordVisible ? 'text' : 'password'} autoComplete="new-password" className={`${inputClass} pr-11`} />
+                      <input name="password" type={isPasswordVisible ? 'text' : 'password'} autoComplete="off" required maxLength={1024} value={connectionFields.password} onChange={handleConnectionFieldChange} className={`${inputClass} pr-11`} />
                       <button type="button" aria-label={isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={isPasswordVisible} onClick={() => setIsPasswordVisible((visible) => !visible)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-[8px] text-[#687b99] outline-none hover:text-[#263d64] focus-visible:ring-2 focus-visible:ring-[#42658f] focus-visible:ring-inset">
                         <EyeIcon crossed={isPasswordVisible} />
                       </button>
@@ -227,12 +319,12 @@ function NewAudit({
                 </div>
 
                 <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#edf3ff] p-4">
-                  <button type="button" disabled title="La conexión PostgreSQL todavía no está implementada" className="h-10 cursor-not-allowed rounded-lg bg-[#172f50] px-5 text-sm font-semibold text-white opacity-60">Probar conexión</button>
-                  <p className="text-xs text-[#687b99]">Pendiente de integración con el backend</p>
+                  <button type="submit" disabled={connectionStatus === 'testing'} className="h-10 rounded-lg bg-[#172f50] px-5 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-60">{connectionStatus === 'testing' ? 'Comprobando…' : 'Probar conexión'}</button>
+                  <p aria-live="polite" role="status" className={`max-w-sm text-xs ${connectionStatus === 'success' ? 'text-[#167052]' : connectionStatus === 'error' ? 'text-[#a33b32]' : 'text-[#687b99]'}`}>{connectionMessage}</p>
                 </div>
 
                 <div className="mt-8 flex flex-col items-end">
-                  <button type="submit" disabled title="Requiere un checklist válido y una conexión verificada" className="h-11 cursor-not-allowed rounded-lg bg-[#172f50] px-6 text-sm font-semibold text-white opacity-50">Iniciar auditoría →</button>
+                  <button type="button" disabled title="La ejecución de auditorías todavía no está implementada" className="h-11 cursor-not-allowed rounded-lg bg-[#172f50] px-6 text-sm font-semibold text-white opacity-50">Iniciar auditoría →</button>
                   <p className="mt-2 text-right text-xs text-[#687b99]">Se habilitará con checklist válido y conexión verificada.</p>
                 </div>
               </form>
