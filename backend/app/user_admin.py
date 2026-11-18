@@ -10,6 +10,12 @@ INSERT_USER_SQL = """
     INSERT INTO users (username, password_hash)
     VALUES (%s, %s)
 """
+RESET_PASSWORD_SQL = """
+    UPDATE public.users SET password_hash = %s
+     WHERE username = %s AND is_active = TRUE
+     RETURNING id
+"""
+REVOKE_USER_SESSIONS_SQL = "DELETE FROM public.user_sessions WHERE user_id = %s"
 
 password_hasher = PasswordHasher()
 
@@ -28,6 +34,33 @@ class UsersTableMissingError(RuntimeError):
 
 class UserCreationError(RuntimeError):
     pass
+
+
+class PasswordResetError(RuntimeError):
+    pass
+
+
+def reset_internal_password(
+    config: InternalDatabaseConfig, username: str, password: str,
+) -> None:
+    validated_username = validate_username(username)
+    password_hash = hash_password(password)
+    try:
+        with psycopg.connect(
+            host=config.host, port=config.port, dbname=config.database,
+            user=config.user, password=config.password, connect_timeout=5,
+        ) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(RESET_PASSWORD_SQL, (password_hash, validated_username))
+                user = cursor.fetchone()
+                if user is None:
+                    raise PasswordResetError("No existe un usuario activo con ese nombre.")
+                cursor.execute(REVOKE_USER_SESSIONS_SQL, (user[0],))
+    except PsycopgError:
+        raise PasswordResetError(
+            "No se pudo restablecer la contraseña. Revise la conexión, los permisos "
+            "y las migraciones 001 y 002 de la base interna."
+        ) from None
 
 
 def validate_username(username: str) -> str:

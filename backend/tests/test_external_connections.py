@@ -248,6 +248,7 @@ class VerifyExternalConnectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(parameters["host"], "localhost")
         self.assertEqual(parameters["hostaddr"], "127.0.0.1")
         self.assertEqual(parameters["options"], SESSION_OPTIONS)
+        self.assertIn("-c search_path=pg_catalog", parameters["options"])
         self.assertEqual(parameters["sslmode"], "disable")
         self.assertEqual(
             self.cursor.executed,

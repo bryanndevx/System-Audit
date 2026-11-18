@@ -1,17 +1,9 @@
 import AppShell from './AppShell'
-
-type DemoAudit = {
-  database: string
-  date: string
-  automation: string
-  duration: string
-}
-
-const DEMO_AUDITS: DemoAudit[] = [
-  { database: 'demo_academica', date: '24/10/2024 16:30', automation: '78%', duration: '2 min 14 s' },
-  { database: 'demo_ventas', date: '22/10/2024 10:15', automation: '82%', duration: '1 min 58 s' },
-  { database: 'demo_estudiantes', date: '18/10/2024 14:02', automation: '65%', duration: '3 min 10 s' },
-]
+import { useEffect, useState } from 'react'
+import { loadAuditHistory } from './auditApi'
+import { formatAuditDate, formatDuration } from './auditPresentation'
+import { ApiError } from './auth'
+import type { AuditHistoryPage } from './auditTypes'
 
 function DatabaseIcon() {
   return (
@@ -34,9 +26,39 @@ function PlusIcon() {
 type DashboardProps = {
   username: string
   onLogout: () => void | Promise<void>
+  onUnauthorized: () => void
 }
 
-function Dashboard({ username, onLogout }: DashboardProps) {
+function Dashboard({ username, onLogout, onUnauthorized }: DashboardProps) {
+  const [history, setHistory] = useState<AuditHistoryPage | null>(null)
+  const [offset, setOffset] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [refresh, setRefresh] = useState(0)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    loadAuditHistory(offset, controller.signal).then((page) => {
+      if (controller.signal.aborted) return
+      setHistory(page)
+      setLoading(false)
+    }).catch((cause: unknown) => {
+      if (controller.signal.aborted) return
+      if (cause instanceof ApiError && cause.status === 401) onUnauthorized()
+      else {
+        setError(cause instanceof ApiError ? cause.message : 'No se pudo contactar al servidor del historial.')
+        setLoading(false)
+      }
+    })
+    return () => controller.abort()
+  }, [offset, refresh, onUnauthorized])
+
+  const changePage = (nextOffset: number) => {
+    setLoading(true)
+    setError('')
+    setOffset(nextOffset)
+  }
+
   return (
     <AppShell activePage="dashboard" username={username} onLogout={onLogout}>
       <main className="px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
@@ -61,9 +83,9 @@ function Dashboard({ username, onLogout }: DashboardProps) {
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h2 id="audits-title" className="text-[24px] font-semibold text-[#263d64]">Auditorías realizadas</h2>
-                <span className="mt-2 inline-block rounded bg-[#eaf0fb] px-2.5 py-1 text-xs font-medium text-[#536984]">Datos demostrativos</span>
+                <p className="mt-2 text-sm text-[#687b99]">Historial de tus auditorías guardadas</p>
               </div>
-              <p className="text-sm text-[#687b99]">3 registros de ejemplo</p>
+              <button type="button" disabled={loading} onClick={() => { setLoading(true); setError(''); setRefresh((value) => value + 1) }} className="rounded-md border border-[#dce5f2] bg-white px-3 py-2 text-sm text-[#42618e] disabled:opacity-50">Actualizar</button>
             </div>
 
             <div className="overflow-hidden rounded-xl bg-white shadow-[0_8px_22px_rgba(38,61,100,0.06)]">
@@ -73,25 +95,30 @@ function Dashboard({ username, onLogout }: DashboardProps) {
                     <tr className="text-xs tracking-[0.05em] uppercase">
                       <th scope="col" className="px-5 py-4 font-medium">Base de datos</th>
                       <th scope="col" className="px-5 py-4 font-medium">Fecha</th>
-                      <th scope="col" className="px-5 py-4 text-center font-medium">Automatización</th>
-                      <th scope="col" className="px-5 py-4 text-center font-medium">Tiempo</th>
+                      <th scope="col" className="px-5 py-4 text-center font-medium">Automatización técnica</th>
+                      <th scope="col" className="px-5 py-4 text-center font-medium">Tiempo SQL</th>
                       <th scope="col" className="px-5 py-4 text-center font-medium">Acción</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {DEMO_AUDITS.map((audit, index) => (
-                      <tr key={audit.database} className={`border-b border-[#e5ebf4] last:border-b-0 ${index % 2 === 1 ? 'bg-[#f8faff]' : 'bg-white'}`}>
+                    {loading ? <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-[#687b99]" role="status">Cargando historial…</td></tr> : error ? <tr><td colSpan={5} className="px-5 py-8 text-sm text-[#a33b32]" role="alert">{error}</td></tr> : history?.auditorias.length === 0 ? <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-[#687b99]">Todavía no tienes auditorías guardadas. Inicia una nueva auditoría para generar el primer registro.</td></tr> : history?.auditorias.map((audit, index) => (
+                      <tr key={audit.id} className={`border-b border-[#e5ebf4] last:border-b-0 ${index % 2 === 1 ? 'bg-[#f8faff]' : 'bg-white'}`}>
                         <td className="px-5 py-5">
                           <span className="flex items-center gap-3 text-[15px] font-medium text-[#263d64]">
                             <span className="text-[#3568ec]"><DatabaseIcon /></span>
-                            {audit.database}
+                            {audit.base_datos}
+                            <span className="mt-1 block text-xs text-[#687b99]">{audit.checklist_version ?? 'Histórico · versión no registrada'}</span>
                           </span>
                         </td>
-                        <td className="px-5 py-5 text-sm text-[#687b99]">{audit.date}</td>
-                        <td className="px-5 py-5 text-center text-sm font-medium text-[#263d64]">{audit.automation}</td>
-                        <td className="px-5 py-5 text-center text-sm text-[#687b99]">{audit.duration}</td>
+                        <td className="px-5 py-5 text-sm text-[#687b99]">{formatAuditDate(audit.fecha)}</td>
+                        <td className="px-5 py-5 text-center text-sm font-medium text-[#263d64]">
+                          <span>{audit.resumen.porcentaje_automatizacion.toLocaleString('es-CO')}%</span>
+                          <span className="mt-1 block text-xs font-normal text-[#687b99]">{audit.resumen.automatizadas} de {audit.resumen.total} actividades</span>
+                          {(audit.resumen.errores_sql > 0 || audit.resumen.errores_ia > 0) && <span className="mt-1 block text-xs font-normal text-[#a33b32]">Errores SQL: {audit.resumen.errores_sql} · IA: {audit.resumen.errores_ia}</span>}
+                        </td>
+                        <td className="px-5 py-5 text-center text-sm text-[#687b99]">{formatDuration(audit.duracion_sql_ms)}</td>
                         <td className="px-5 py-5 text-center">
-                          <button type="button" disabled title="El detalle de auditoría todavía no está disponible" className="cursor-not-allowed rounded bg-[#eef3fb] px-4 py-1.5 text-sm text-[#263d64] opacity-70">Ver</button>
+                          <a href={`/auditorias/${audit.id}`} aria-label={`Ver auditoría de ${audit.base_datos} del ${formatAuditDate(audit.fecha)}`} className="inline-block rounded bg-[#eef3fb] px-4 py-1.5 text-sm text-[#42618e] hover:bg-[#dce8fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3568ec]">Ver</a>
                         </td>
                       </tr>
                     ))}
@@ -99,7 +126,14 @@ function Dashboard({ username, onLogout }: DashboardProps) {
                 </table>
               </div>
             </div>
-            <p className="mt-3 text-xs text-[#687b99]">Esta información pertenece únicamente a la maqueta visual y no proviene del backend.</p>
+            {!loading && !error && history && history.total > 0 && <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-[#687b99]">
+              <p>{offset + 1}–{offset + history.auditorias.length} de {history.total} auditorías</p>
+              <div className="flex gap-2">
+                <button type="button" disabled={offset === 0} onClick={() => changePage(Math.max(0, offset - 20))} className="rounded-md border border-[#dce5f2] bg-white px-3 py-2 disabled:opacity-40">Anterior</button>
+                <button type="button" disabled={offset + history.auditorias.length >= history.total} onClick={() => changePage(offset + 20)} className="rounded-md border border-[#dce5f2] bg-white px-3 py-2 disabled:opacity-40">Siguiente</button>
+              </div>
+            </div>}
+            <p className="mt-3 text-xs leading-5 text-[#687b99]">La automatización técnica cuenta ejecuciones SQL completadas con evidencia suficiente o sin datos. Los resultados parciales y los errores se distinguen de la redacción de IA.</p>
           </section>
         </div>
       </main>

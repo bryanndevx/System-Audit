@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import Dashboard from './Dashboard'
 import NewAudit from './NewAudit'
+import SavedAuditPage from './SavedAuditPage'
 import { ApiError, login, logout, restoreSession } from './auth'
 import type { AuthState } from './auth'
 
@@ -90,6 +91,10 @@ function App() {
   }
 
   if (sessionStatus === 'authenticated' && authState) {
+    const savedAuditRoute = window.location.pathname.match(/^\/auditorias\/([^/]+)\/?$/)
+    if (savedAuditRoute) {
+      return <SavedAuditPage key={savedAuditRoute[1]} auditId={savedAuditRoute[1]} username={authState.user.username} onLogout={handleLogout} onUnauthorized={handleUnauthorized} />
+    }
     if (window.location.pathname === '/nueva-auditoria') {
       return (
         <NewAudit
@@ -104,6 +109,7 @@ function App() {
       <Dashboard
         username={authState.user.username}
         onLogout={handleLogout}
+        onUnauthorized={handleUnauthorized}
       />
     )
   }

@@ -1,8 +1,9 @@
 import os
+import re
 from collections.abc import Iterator
 from io import BytesIO
 from pathlib import Path
-from zipfile import BadZipFile
+from zipfile import BadZipFile, ZipFile
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from openpyxl import load_workbook
@@ -24,10 +25,19 @@ EXPECTED_HEADERS = (
     "Notas / Evidencia",
 )
 DEFAULT_MAX_FILE_BYTES = 5 * 1024 * 1024
+MAX_CHECKLIST_ACTIVITIES = 100
+MAX_ACTIVITY_IDENTIFIER_LENGTH = 50
+MAX_ACTIVITY_NAME_LENGTH = 500
+MAX_PHASE_NAME_LENGTH = 250
+MAX_DELIVERABLE_LENGTH = 1000
+MAX_PRIORITY_LENGTH = 50
+MAX_EXPANDED_FILE_BYTES = 30 * 1024 * 1024
+MAX_WORKSHEET_ROWS = 5000
 ALLOWED_CONTENT_TYPES = {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "application/octet-stream",
 }
+PHASE_NUMBER_PATTERN = re.compile(r"^\s*(\d+(?:\.\d+)*)\s*(?:[.)-]\s*|\s+)")
 
 router = APIRouter(prefix="/api/checklists", tags=["checklists"])
 
@@ -37,6 +47,7 @@ class ActividadImportada(BaseModel):
     actividad: str
     entregable_esperado: str | None
     prioridad: str | None
+    numero_hoja: str | None = None
 
 
 class FaseImportada(BaseModel):
@@ -49,6 +60,8 @@ class ChecklistImportado(BaseModel):
     cantidad_fases: int
     cantidad_actividades: int
     fases: list[FaseImportada]
+    checklist_version: str = 'personalizado'
+    checklist_huella: str | None = None
 
 
 class ChecklistValidationError(ValueError):
@@ -80,10 +93,22 @@ def _normalized(value: object) -> str:
     return " ".join(_text(value).split()).casefold()
 
 
+def _activity_identifier(phase_name: str, activity_number: str) -> str:
+    if "." in activity_number:
+        return activity_number
+
+    phase_number = PHASE_NUMBER_PATTERN.match(phase_name)
+    if phase_number is None:
+        return activity_number
+    return f"{phase_number.group(1)}.{activity_number}"
+
+
 def _find_data_rows(rows: Iterator[tuple[object, ...]]) -> tuple[int, Iterator[tuple[object, ...]]]:
     expected = tuple(header.casefold() for header in EXPECTED_HEADERS)
 
     for row_number, row in enumerate(rows, start=1):
+        if row_number > MAX_WORKSHEET_ROWS:
+            raise ChecklistValidationError("La hoja supera el máximo de 5000 filas procesables.")
         actual = tuple(_normalized(value) for value in row[: len(EXPECTED_HEADERS)])
         if actual == expected:
             return row_number, rows
@@ -95,6 +120,12 @@ def _find_data_rows(rows: Iterator[tuple[object, ...]]) -> tuple[int, Iterator[t
 
 
 def parse_checklist(content: bytes, file_name: str) -> ChecklistImportado:
+    try:
+        with ZipFile(BytesIO(content)) as archive:
+            if len(archive.infolist()) > 2000 or sum(item.file_size for item in archive.infolist()) > MAX_EXPANDED_FILE_BYTES:
+                raise ChecklistValidationError("El Excel supera el límite de expansión segura de 30 MiB o 2000 archivos internos.")
+    except BadZipFile:
+        raise ChecklistValidationError("El archivo no es un libro Excel .xlsx válido o está dañado.") from None
     try:
         workbook = load_workbook(
             filename=BytesIO(content),
@@ -114,7 +145,9 @@ def parse_checklist(content: bytes, file_name: str) -> ChecklistImportado:
             )
 
         worksheet = workbook[SHEET_NAME]
-        rows = worksheet.iter_rows(values_only=True)
+        if worksheet.max_row and worksheet.max_row > MAX_WORKSHEET_ROWS:
+            raise ChecklistValidationError("La hoja supera el máximo de 5000 filas procesables; elimine el formato de filas vacías sobrantes.")
+        rows = worksheet.iter_rows(values_only=True, max_col=len(EXPECTED_HEADERS))
         header_row, data_rows = _find_data_rows(rows)
 
         phases: list[FaseImportada] = []
@@ -123,6 +156,8 @@ def parse_checklist(content: bytes, file_name: str) -> ChecklistImportado:
         activity_number_rows: dict[str, int] = {}
 
         for row_number, row in enumerate(data_rows, start=header_row + 1):
+            if row_number > MAX_WORKSHEET_ROWS:
+                raise ChecklistValidationError("La hoja supera el máximo de 5000 filas procesables.")
             values = tuple(row[: len(EXPECTED_HEADERS)])
             padded_values = values + (None,) * (len(EXPECTED_HEADERS) - len(values))
             phase_value, number, activity, deliverable, priority, _, _, _ = padded_values
@@ -156,17 +191,40 @@ def parse_checklist(content: bytes, file_name: str) -> ChecklistImportado:
                 raise ChecklistValidationError(
                     f"La actividad de la fila {row_number} no tiene valor en la columna '#'."
                 )
-            if activity_number in activity_number_rows:
-                first_row = activity_number_rows[activity_number]
+            activity_identifier = _activity_identifier(
+                current_phase.nombre,
+                activity_number,
+            )
+            for value, max_length, label in (
+                (activity_identifier, MAX_ACTIVITY_IDENTIFIER_LENGTH, "identificador de actividad"),
+                (activity_name, MAX_ACTIVITY_NAME_LENGTH, "nombre de actividad"),
+                (current_phase.nombre, MAX_PHASE_NAME_LENGTH, "nombre de fase"),
+                (_text(deliverable), MAX_DELIVERABLE_LENGTH, "entregable esperado"),
+                (_text(priority), MAX_PRIORITY_LENGTH, "prioridad"),
+            ):
+                if len(value) > max_length:
+                    raise ChecklistValidationError(
+                        f"El {label} de la fila {row_number} supera el máximo "
+                        f"de {max_length} caracteres permitido para ejecutar la auditoría."
+                    )
+            if activity_identifier in activity_number_rows:
+                first_row = activity_number_rows[activity_identifier]
                 raise ChecklistValidationError(
-                    f"El identificador de actividad '{activity_number}' está duplicado "
+                    f"El identificador de actividad '{activity_identifier}' está duplicado "
                     f"en las filas {first_row} y {row_number}."
                 )
-            activity_number_rows[activity_number] = row_number
+            if len(activity_number_rows) >= MAX_CHECKLIST_ACTIVITIES:
+                raise ChecklistValidationError(
+                    f"El checklist supera el máximo de {MAX_CHECKLIST_ACTIVITIES} "
+                    "actividades por auditoría. No se importó el archivo; "
+                    "divídalo en archivos de menor tamaño sin cambiar los identificadores."
+                )
+            activity_number_rows[activity_identifier] = row_number
 
             current_phase.actividades.append(
                 ActividadImportada(
-                    numero=activity_number,
+                    numero=activity_identifier,
+                    numero_hoja=activity_number,
                     actividad=activity_name,
                     entregable_esperado=_text(deliverable) or None,
                     prioridad=_text(priority) or None,
@@ -180,11 +238,19 @@ def parse_checklist(content: bytes, file_name: str) -> ChecklistImportado:
                 "La hoja 'Checklist Maestro' no contiene actividades válidas."
             )
 
+        from types import SimpleNamespace
+        from app.checklist_versions import detect_version, fingerprint
+        version = detect_version([SimpleNamespace(**a.model_dump(), fase=p.nombre) for p in phases_with_activities for a in p.actividades])
+        if 'Version' in workbook.sheetnames:
+            metadata = dict(workbook['Version'].iter_rows(min_row=1,max_row=2,max_col=2,values_only=True))
+            if metadata.get('version') != version or metadata.get('sha256') != fingerprint(version):
+                raise ChecklistValidationError('Los requisitos no coinciden con la versión y huella declaradas. No altere un checklist versionado durante una medición.')
         return ChecklistImportado(
             nombre_archivo=Path(file_name).name,
             cantidad_fases=len(phases_with_activities),
             cantidad_actividades=activity_count,
             fases=phases_with_activities,
+            checklist_version=version, checklist_huella=fingerprint(version),
         )
     finally:
         workbook.close()

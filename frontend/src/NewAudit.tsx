@@ -1,28 +1,19 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import AppShell from './AppShell'
-
-type ImportedActivity = {
-  numero: string
-  actividad: string
-  entregable_esperado: string | null
-  prioridad: string | null
-}
-
-type ImportedPhase = {
-  nombre: string
-  actividades: ImportedActivity[]
-}
-
-type ChecklistImportResponse = {
-  nombre_archivo: string
-  cantidad_fases: number
-  cantidad_actividades: number
-  fases: ImportedPhase[]
-}
+import AuditProgress from './AuditProgress'
+import AuditResults from './AuditResults'
+import ElevatedPrivilegesDialog from './ElevatedPrivilegesDialog'
+import { readAuditStream } from './auditApi'
+import type { AuditProgressEvent } from './auditApi'
+import type {
+  AuditExecutionResponse,
+  ChecklistImportResponse,
+} from './auditTypes'
 
 type ImportStatus = 'idle' | 'loading' | 'success' | 'error'
 type ConnectionStatus = 'idle' | 'testing' | 'success' | 'error'
+type AuditStatus = 'idle' | 'running' | 'success' | 'error'
 
 type ConnectionFields = {
   host: string
@@ -106,13 +97,41 @@ function NewAudit({
   const [connectionMessage, setConnectionMessage] = useState(
     'Pendiente de comprobación',
   )
+  const [auditStatus, setAuditStatus] = useState<AuditStatus>('idle')
+  const [auditMessage, setAuditMessage] = useState(
+    'Se habilitará con checklist válido y conexión verificada.',
+  )
+  const [auditStartedAt, setAuditStartedAt] = useState(0)
+  const [progressEvents, setProgressEvents] = useState<AuditProgressEvent[]>([])
+  const [progressStage, setProgressStage] = useState('Obteniendo evidencias PostgreSQL')
+  const [auditResult, setAuditResult] =
+    useState<AuditExecutionResponse | null>(null)
   const connectionAttempt = useRef(0)
+  const [elevatedPrivileges, setElevatedPrivileges] = useState<string[] | null>(null)
+  const [elevatedConfirmed, setElevatedConfirmed] = useState(false)
+  const [continuationAllowed, setContinuationAllowed] = useState(true)
+  const auditAttempt = useRef(0)
+  const displayedImportStatus: ImportStatus = importedChecklist
+    ? 'success'
+    : importStatus
+  const canStartAudit =
+    importedChecklist !== null && connectionStatus === 'success'
+
+  const resetAuditExecution = () => {
+    auditAttempt.current += 1
+    setAuditStatus('idle')
+    setAuditResult(null)
+    setAuditMessage(
+      'Se habilitará con checklist válido y conexión verificada.',
+    )
+  }
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     setSelectedFileName(file?.name ?? '')
     setImportedChecklist(null)
     setImportError('')
+    resetAuditExecution()
 
     if (!file) {
       setImportStatus('idle')
@@ -144,6 +163,11 @@ function NewAudit({
       const result = (await response.json()) as ChecklistImportResponse
       setImportedChecklist(result)
       setImportStatus('success')
+      if (connectionStatus === 'success') {
+        setAuditMessage(
+          'Checklist y conexión listos para ejecutar el motor técnico.',
+        )
+      }
     } catch (error) {
       setImportStatus('error')
       setImportError(
@@ -157,6 +181,8 @@ function NewAudit({
   }
 
   const handleConnectionFieldChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setElevatedConfirmed(false)
+    setElevatedPrivileges(null)
     const field = event.target.name as keyof ConnectionFields
     connectionAttempt.current += 1
     setConnectionFields((current) => ({
@@ -165,10 +191,16 @@ function NewAudit({
     }))
     setConnectionStatus('idle')
     setConnectionMessage('Pendiente de comprobación')
+    resetAuditExecution()
   }
 
   const handleConnectionTest = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    await checkConnection(false)
+  }
+
+  const checkConnection = async (confirmElevated: boolean) => {
+    setElevatedConfirmed(false)
     const attempt = connectionAttempt.current + 1
     connectionAttempt.current = attempt
     setConnectionStatus('testing')
@@ -185,13 +217,22 @@ function NewAudit({
         body: JSON.stringify({
           ...connectionFields,
           port: Number(connectionFields.port),
+          confirmar_privilegios_elevados: confirmElevated,
         }),
       })
 
       if (!response.ok) {
         const errorBody = (await response.json().catch(() => null)) as
-          | { detail?: string }
+          | { detail?: string | { code?: string; message?: string; privileges?: string[]; continuation_allowed?: boolean } }
           | null
+        if (attempt !== connectionAttempt.current) return
+        if (response.status === 409 && typeof errorBody?.detail === 'object' && errorBody.detail.code === 'elevated_privileges_confirmation_required') {
+          setConnectionStatus('idle')
+          setConnectionMessage('La cuenta requiere confirmación por sus privilegios elevados.')
+          setElevatedPrivileges(errorBody.detail.privileges ?? [])
+          setContinuationAllowed(errorBody.detail.continuation_allowed !== false)
+          return
+        }
         if (response.status === 401) onUnauthorized()
         throw new Error(
           typeof errorBody?.detail === 'string'
@@ -202,12 +243,18 @@ function NewAudit({
 
       const result = (await response.json()) as ConnectionTestResponse
       if (attempt !== connectionAttempt.current) return
+      setElevatedConfirmed(result.verified && confirmElevated)
       setConnectionStatus(result.verified ? 'success' : 'error')
       setConnectionMessage(
         result.verified
           ? result.message
           : 'No fue posible comprobar la conexión.',
       )
+      if (result.verified && importedChecklist) {
+        setAuditMessage(
+          'Checklist y conexión listos para ejecutar el motor técnico.',
+        )
+      }
     } catch (error) {
       if (attempt !== connectionAttempt.current) return
       setConnectionStatus('error')
@@ -221,8 +268,168 @@ function NewAudit({
     }
   }
 
+  const handleStartAudit = async () => {
+    if (!importedChecklist || connectionStatus !== 'success') return
+
+    const attempt = auditAttempt.current + 1
+    auditAttempt.current = attempt
+    setAuditStartedAt(Date.now())
+    setProgressEvents([])
+    setProgressStage('Obteniendo evidencias PostgreSQL')
+    setAuditResult(null)
+    setAuditStatus('running')
+    setAuditMessage('Ejecutando actividades técnicas configuradas…')
+
+    const activities = importedChecklist.fases.flatMap((phase) =>
+      phase.actividades.map((activity) => ({
+        numero: activity.numero,
+        actividad: activity.actividad,
+        fase: phase.nombre,
+        entregable_esperado: activity.entregable_esperado,
+        prioridad: activity.prioridad,
+        numero_hoja: activity.numero_hoja,
+      })),
+    )
+
+    try {
+      const response = await fetch('/api/audits/execute-stream', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
+        body: JSON.stringify({
+          conexion: {
+            ...connectionFields,
+            port: Number(connectionFields.port),
+            confirmar_privilegios_elevados: elevatedConfirmed,
+          },
+          actividades: activities,
+          checklist_version: importedChecklist.checklist_version,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorBody = (await response.json().catch(() => null)) as
+          | { detail?: string }
+          | null
+        if (response.status === 401) onUnauthorized()
+        throw new Error(
+          typeof errorBody?.detail === 'string'
+            ? errorBody.detail
+            : 'No fue posible ejecutar la auditoría técnica.',
+        )
+      }
+
+      const result = await readAuditStream(response, (event) => {
+        if (attempt !== auditAttempt.current) return
+        if (event.tipo === 'actividad') setProgressEvents((previous) => [...previous, event])
+        if (event.tipo === 'etapa' && event.etapa) setProgressStage(event.etapa)
+      })
+      if (attempt !== auditAttempt.current) return
+      const unconfigured = result.actividades.filter(
+        (activity) =>
+          activity.estado_ejecucion === 'sin_automatizacion_configurada',
+      ).length
+      const technicalErrors = result.actividades.filter(
+        (activity) => activity.estado_ejecucion === 'error_tecnico',
+      ).length
+      const aiErrors = result.actividades.filter(
+        (activity) => activity.redaccion_ia.estado === 'error',
+      ).length
+      const configured = result.actividades.length - unconfigured
+      const seconds = (result.duracion_total_ms / 1000).toFixed(2)
+
+      setAuditResult(result)
+      setConnectionFields((previous) => ({ ...previous, password: '' }))
+      setAuditStatus('success')
+      setAuditMessage(
+        `Ejecución finalizada: ${result.actividades.length} actividades evaluadas; ` +
+          `${configured} con automatización configurada y ${unconfigured} sin automatización configurada. ` +
+          `${technicalErrors} errores técnicos y ${aiErrors} errores de IA. Tiempo SQL: ${seconds} s.`,
+      )
+    } catch (error) {
+      if (attempt !== auditAttempt.current) return
+      setAuditStatus('error')
+      setConnectionStatus('idle')
+      setConnectionMessage(
+        'Vuelva a introducir la contraseña y compruebe la conexión.',
+      )
+      setAuditMessage(
+        error instanceof TypeError
+          ? 'No se pudo contactar al motor de auditoría.'
+          : error instanceof Error
+            ? error.message
+            : 'No fue posible ejecutar la auditoría técnica.',
+      )
+    } finally {
+      setConnectionFields((current) => ({
+        ...current,
+        password: '',
+      }))
+    }
+  }
+
+  const handleNewAudit = () => {
+    setElevatedConfirmed(false)
+    setElevatedPrivileges(null)
+    auditAttempt.current += 1
+    connectionAttempt.current += 1
+    setSelectedFileName('')
+    setImportedChecklist(null)
+    setImportStatus('idle')
+    setImportError('')
+    setConnectionFields({
+      host: '',
+      port: '',
+      database: '',
+      username: '',
+      password: '',
+    })
+    setConnectionStatus('idle')
+    setConnectionMessage('Pendiente de comprobación')
+    setAuditStatus('idle')
+    setAuditResult(null)
+    setAuditMessage(
+      'Se habilitará con checklist válido y conexión verificada.',
+    )
+  }
+
+  if (auditStatus === 'running' && importedChecklist) {
+    return (
+      <AuditProgress
+        username={username}
+        database={connectionFields.database}
+        phases={importedChecklist.fases}
+        startedAt={auditStartedAt}
+        onLogout={onLogout}
+        events={progressEvents}
+        stage={progressStage}
+      />
+    )
+  }
+
+  if (auditStatus === 'success' && auditResult) {
+    return (
+      <AuditResults
+        username={username}
+        database={connectionFields.database}
+        result={auditResult}
+        onNewAudit={handleNewAudit}
+        onLogout={onLogout}
+      />
+    )
+  }
+
   return (
-    <AppShell activePage="new-audit" username={username} onLogout={onLogout}>
+    <AppShell
+      activePage="new-audit"
+      username={username}
+      onLogout={onLogout}
+      serverLabel={connectionStatus === 'success' ? connectionFields.database : undefined}
+      serverConnected={connectionStatus === 'success'}
+    >
       <main className="px-5 py-8 sm:px-8 lg:px-10 lg:py-9">
         <div className="mx-auto max-w-[1120px]">
           <header>
@@ -250,12 +457,12 @@ function NewAudit({
                 <div className="mt-4 rounded-lg bg-[#edf3ff] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="min-w-0 truncate text-sm font-semibold text-[#263d64]">{importedChecklist?.nombre_archivo || selectedFileName || 'Sin archivo seleccionado'}</p>
-                    <span className={`shrink-0 rounded bg-white px-2 py-1 text-xs ${importStatus === 'success' ? 'text-[#167052]' : importStatus === 'error' ? 'text-[#a33b32]' : 'text-[#687b99]'}`}>
-                      {importStatus === 'loading'
+                    <span className={`shrink-0 rounded bg-white px-2 py-1 text-xs ${displayedImportStatus === 'success' ? 'text-[#167052]' : displayedImportStatus === 'error' ? 'text-[#a33b32]' : 'text-[#687b99]'}`}>
+                      {displayedImportStatus === 'loading'
                         ? 'Validando…'
-                        : importStatus === 'success'
+                        : displayedImportStatus === 'success'
                           ? 'Validado'
-                          : importStatus === 'error'
+                          : displayedImportStatus === 'error'
                             ? 'Error'
                             : 'Pendiente'}
                     </span>
@@ -270,10 +477,11 @@ function NewAudit({
                       <dd className="mt-1 text-lg font-semibold text-[#263d64]">{importedChecklist?.cantidad_actividades ?? '—'}</dd>
                     </div>
                   </dl>
+                  {importedChecklist && <p className="mt-3 text-xs break-words text-[#687b99]">Versión: {importedChecklist.checklist_version ?? 'Histórica'}{importedChecklist.checklist_huella ? ` · Huella ${importedChecklist.checklist_huella.slice(0,12)}` : ''}</p>}
                   <div className="mt-3 min-h-4 text-xs" aria-live="polite" role="status">
-                    {importStatus === 'success' && <p className="text-[#167052]">Checklist importado y estructura validada.</p>}
-                    {importStatus === 'error' && <p className="text-[#a33b32]">{importError}</p>}
-                    {importStatus === 'idle' && <p className="text-[#687b99]">Seleccione un archivo para obtener los conteos reales.</p>}
+                    {displayedImportStatus === 'success' && <p className="text-[#167052]">Checklist importado y estructura validada.</p>}
+                    {displayedImportStatus === 'error' && <p className="text-[#a33b32]">{importError}</p>}
+                    {displayedImportStatus === 'idle' && <p className="text-[#687b99]">Seleccione un archivo para obtener los conteos reales.</p>}
                   </div>
                 </div>
               </div>
@@ -324,14 +532,23 @@ function NewAudit({
                 </div>
 
                 <div className="mt-8 flex flex-col items-end">
-                  <button type="button" disabled title="La ejecución de auditorías todavía no está implementada" className="h-11 cursor-not-allowed rounded-lg bg-[#172f50] px-6 text-sm font-semibold text-white opacity-50">Iniciar auditoría →</button>
-                  <p className="mt-2 text-right text-xs text-[#687b99]">Se habilitará con checklist válido y conexión verificada.</p>
+                  <button type="button" disabled={!canStartAudit || auditStatus === 'running'} onClick={handleStartAudit} className="h-11 rounded-lg bg-[#172f50] px-6 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">{auditStatus === 'running' ? 'Ejecutando…' : 'Iniciar auditoría →'}</button>
+                  <p aria-live="polite" role="status" className={`mt-2 max-w-xl text-right text-xs ${auditStatus === 'success' ? 'text-[#167052]' : auditStatus === 'error' ? 'text-[#a33b32]' : 'text-[#687b99]'}`}>{auditMessage}</p>
                 </div>
               </form>
             </section>
           </div>
         </div>
       </main>
+      {elevatedPrivileges !== null && <ElevatedPrivilegesDialog privileges={elevatedPrivileges} continuationAllowed={continuationAllowed}
+        onChangeUser={() => {
+          setElevatedPrivileges(null)
+          setElevatedConfirmed(false)
+          setConnectionStatus('idle')
+          setConnectionMessage('Introduzca una cuenta de lectura y vuelva a probar la conexión.')
+          requestAnimationFrame(() => document.querySelector<HTMLInputElement>('input[name="username"]')?.focus())
+        }}
+        onContinue={() => { setElevatedPrivileges(null); void checkConnection(true) }} />}
     </AppShell>
   )
 }

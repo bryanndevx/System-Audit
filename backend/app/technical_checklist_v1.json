@@ -1,0 +1,538 @@
+[
+  {
+    "numero": "1.1",
+    "numero_hoja": "1.1",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Registrar versión, edición y parámetros de identificación de PostgreSQL.",
+    "entregable_esperado": "Ficha de motor PostgreSQL.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "1.2",
+    "numero_hoja": "1.2",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Documentar la arquitectura lógica interna de bases, esquemas y relaciones.",
+    "entregable_esperado": "Mapa lógico PostgreSQL.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "1.3",
+    "numero_hoja": "1.3",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Evaluar organización de esquemas y patrón de aislamiento a nivel BD.",
+    "entregable_esperado": "Nota de organización y aislamiento en BD.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "1.4",
+    "numero_hoja": "1.4",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Inventariar extensiones, FDW, servidores foráneos y conexiones declaradas en PostgreSQL.",
+    "entregable_esperado": "Matriz de integraciones visibles en BD.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "1.5",
+    "numero_hoja": "1.5",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Registrar configuración y características visibles de la instancia PostgreSQL.",
+    "entregable_esperado": "Ficha técnica de instancia PostgreSQL.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "1.6",
+    "numero_hoja": "1.6",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Inventariar esquemas y describir su contenido técnico.",
+    "entregable_esperado": "Mapa técnico de esquemas y objetos.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "1.7",
+    "numero_hoja": "1.7",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Inventariar mecanismos e historial de migración visible en PostgreSQL.",
+    "entregable_esperado": "Bitácora de migraciones detectable.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "1.8",
+    "numero_hoja": "1.8",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Analizar patrones observados de nomenclatura de objetos de BD.",
+    "entregable_esperado": "Reporte de convenciones observadas.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "2.1",
+    "numero_hoja": "2.1",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Inventariar todas las relaciones de usuario por esquema, tipo y partición.",
+    "entregable_esperado": "Inventario estructural de tablas.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "2.2",
+    "numero_hoja": "2.2",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Clasificar las tablas por características técnicas verificables y señalar categorías ambiguas.",
+    "entregable_esperado": "Matriz de clasificación técnica sustentada.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "2.3",
+    "numero_hoja": "2.3",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Medir volumetría actual por tabla, índices y base, con referencia temporal de captura.",
+    "entregable_esperado": "Reporte de volumetría actual.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "2.4",
+    "numero_hoja": "2.4",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Identificar indicios de inactividad según estadísticas, dependencias y ventana observable.",
+    "entregable_esperado": "Reporte de indicios de uso de tablas.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "2.5",
+    "numero_hoja": "2.5",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Documentar dependencias entre tablas, FK y objetos de BD.",
+    "entregable_esperado": "Matriz de dependencias técnicas.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "2.6",
+    "numero_hoja": "2.6",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Inventariar tablas candidatas a auditoría y mecanismos técnicos de trazabilidad.",
+    "entregable_esperado": "Inventario técnico de trazabilidad.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "2.7",
+    "numero_hoja": "2.7",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Inventariar vistas y vistas materializadas con dependencias y estado.",
+    "entregable_esperado": "Inventario técnico de vistas.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "2.8",
+    "numero_hoja": "2.8",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Inventariar funciones, procedimientos y triggers propios con eventos y dependencias.",
+    "entregable_esperado": "Inventario de rutinas y triggers.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.1",
+    "numero_hoja": "3.1",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Extraer diccionario de columnas de las tablas auditables.",
+    "entregable_esperado": "Diccionario técnico de datos.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.2",
+    "numero_hoja": "3.2",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Documentar tipos, longitudes, precisión, escala y tipologías PostgreSQL de cada columna.",
+    "entregable_esperado": "Matriz de tipos de datos.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.3",
+    "numero_hoja": "3.3",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Inventariar nulabilidad real declarada y obligatoriedad de columnas.",
+    "entregable_esperado": "Matriz NOT NULL y opcionalidad.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.4",
+    "numero_hoja": "3.4",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Documentar defaults, dominios, ENUM, CHECK y restricciones asociadas.",
+    "entregable_esperado": "Matriz de dominios y restricciones.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "3.5",
+    "numero_hoja": "3.5",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Identificar columnas generated, identity y expresiones de cómputo del esquema.",
+    "entregable_esperado": "Inventario de columnas generadas.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "3.6",
+    "numero_hoja": "3.6",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Documentar reglas declarativas verificables por columna (CHECK, FK, UNIQUE y dominios).",
+    "entregable_esperado": "Matriz de controles declarativos.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.7",
+    "numero_hoja": "3.7",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Identificar columnas potencialmente sensibles por nombres, tipos y comentarios.",
+    "entregable_esperado": "Matriz preliminar de sensibilidad.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.8",
+    "numero_hoja": "3.8",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Evaluar coherencia sintáctica de nombres de campos con criterios documentados.",
+    "entregable_esperado": "Reporte de coherencia de nomenclatura.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "3.9",
+    "numero_hoja": "3.9",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Identificar columnas sin comentarios, dependencias limitadas u otros indicios de revisión.",
+    "entregable_esperado": "Lista de columnas para revisión técnica.",
+    "prioridad": "Baja"
+  },
+  {
+    "numero": "4.1",
+    "numero_hoja": "4.1",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Inventariar índices, métodos, claves, columnas incluidas, predicados y expresiones.",
+    "entregable_esperado": "Inventario completo de índices visibles.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "4.2",
+    "numero_hoja": "4.2",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Inventariar y relacionar PK, FK y restricciones únicas.",
+    "entregable_esperado": "Matriz de claves y relaciones.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "4.3",
+    "numero_hoja": "4.3",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Detectar índices idénticos y registrar estadísticas de uso con advertencia temporal.",
+    "entregable_esperado": "Reporte de coincidencias y uso de índices.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "4.4",
+    "numero_hoja": "4.4",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Identificar FK sin índice de soporte equivalente como candidatos a revisión.",
+    "entregable_esperado": "Matriz de FK e índices de soporte.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "4.5",
+    "numero_hoja": "4.5",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Consultar disponibilidad de pg_stat_statements y estadísticas de consultas accesibles.",
+    "entregable_esperado": "Reporte de observabilidad de consultas.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "4.6",
+    "numero_hoja": "4.6",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Registrar estadísticas de tuplas muertas, autovacuum y señales de mantenimiento.",
+    "entregable_esperado": "Reporte de indicadores de mantenimiento.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "4.7",
+    "numero_hoja": "4.7",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Inventariar índices compuestos, parciales, funcionales y covering.",
+    "entregable_esperado": "Matriz de diseños de índices existentes.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "4.8",
+    "numero_hoja": "4.8",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Inventariar tablas particionadas, reglas, límites y tamaños.",
+    "entregable_esperado": "Reporte de particionamiento existente.",
+    "prioridad": "Baja"
+  },
+  {
+    "numero": "5.1",
+    "numero_hoja": "5.1",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Generar diagrama entidad-relación físico a partir de tablas, PK y FK.",
+    "entregable_esperado": "Diagrama ER físico generado.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "5.2",
+    "numero_hoja": "5.2",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Identificar indicios estructurales de redundancia mediante columnas y relaciones.",
+    "entregable_esperado": "Reporte de candidatos a revisión de normalización.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "5.3",
+    "numero_hoja": "5.3",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Inventariar relaciones declaradas y columnas de referencia candidatas sin FK.",
+    "entregable_esperado": "Matriz de relaciones y posibles referencias.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "5.4",
+    "numero_hoja": "5.4",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Derivar cardinalidades estructurales desde PK, FK y UNIQUE.",
+    "entregable_esperado": "Matriz de cardinalidad física.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "5.5",
+    "numero_hoja": "5.5",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Evaluar coherencia de tipos y relaciones entre esquemas.",
+    "entregable_esperado": "Matriz de consistencia estructural transversal.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "5.6",
+    "numero_hoja": "5.6",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Identificar tablas puente existentes mediante estructura de claves y FK.",
+    "entregable_esperado": "Inventario de tablas puente candidatas.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "5.7",
+    "numero_hoja": "5.7",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Analizar tipos, generación y composición de PK y su consistencia.",
+    "entregable_esperado": "Nota técnica de convenciones PK.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "5.8",
+    "numero_hoja": "5.8",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Comparar tipos y características de columnas FK respecto de PK referenciadas.",
+    "entregable_esperado": "Reporte de compatibilidad PK/FK.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "6.1",
+    "numero_hoja": "6.1",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Analizar indicadores disponibles de actividad, caché, I/O y sesiones para priorizar observabilidad.",
+    "entregable_esperado": "Reporte de indicadores operativos PostgreSQL.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "6.2",
+    "numero_hoja": "6.2",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Evaluar tamaño, particiones e indicios de crecimiento para seguimiento de capacidad.",
+    "entregable_esperado": "Reporte de capacidad y seguimiento.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "6.3",
+    "numero_hoja": "6.3",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Inventariar vistas materializadas, población y metadatos de mantenimiento observable.",
+    "entregable_esperado": "Reporte de vistas materializadas.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "6.4",
+    "numero_hoja": "6.4",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Identificar rutinas y propiedades de ejecución visibles para revisión.",
+    "entregable_esperado": "Inventario de funciones para revisión.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "6.5",
+    "numero_hoja": "6.5",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Identificar tablas y columnas potenciales para revisión de retención según estructura.",
+    "entregable_esperado": "Matriz de candidatos a política de retención.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "6.6",
+    "numero_hoja": "6.6",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Documentar hit ratios y estadísticas de bloques disponibles en PostgreSQL.",
+    "entregable_esperado": "Reporte de indicadores de caché de BD.",
+    "prioridad": "Baja"
+  },
+  {
+    "numero": "6.7",
+    "numero_hoja": "6.7",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Auditar parámetros de configuración de motor, límites y timeouts accesibles.",
+    "entregable_esperado": "Matriz de configuración PostgreSQL.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "6.8",
+    "numero_hoja": "6.8",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Priorizar hallazgos técnicos observados por criticidad provisional y evidencia.",
+    "entregable_esperado": "Matriz preliminar de hallazgos.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "7.1",
+    "numero_hoja": "7.1",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Inventariar restricciones declaradas NOT NULL, UNIQUE, CHECK y DEFAULT.",
+    "entregable_esperado": "Reporte de restricciones PostgreSQL.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "7.2",
+    "numero_hoja": "7.2",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Inspeccionar estado, validación y acciones de restricciones FK.",
+    "entregable_esperado": "Reporte del estado de integridad referencial.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "7.3",
+    "numero_hoja": "7.3",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Evaluar capacidad declarativa de prevención de duplicados y huérfanos.",
+    "entregable_esperado": "Matriz de protección de integridad declarativa.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "7.4",
+    "numero_hoja": "7.4",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Inventariar tablas maestras candidatas y sus dependencias referenciales.",
+    "entregable_esperado": "Matriz técnica de dependencias maestras.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "7.5",
+    "numero_hoja": "7.5",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Documentar controles de integridad implementados dentro de PostgreSQL.",
+    "entregable_esperado": "Matriz de validaciones en BD.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "7.6",
+    "numero_hoja": "7.6",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Evaluar parámetros transaccionales y capacidades ACID configuradas.",
+    "entregable_esperado": "Ficha de propiedades transaccionales observables.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "7.7",
+    "numero_hoja": "7.7",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Inventariar CHECK, dominios y tipos aplicables a fechas, rangos y estados.",
+    "entregable_esperado": "Matriz de reglas declarativas de rangos y fechas.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "7.8",
+    "numero_hoja": "7.8",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Revisar estado del historial de migraciones accesible y objetos dependientes.",
+    "entregable_esperado": "Reporte de trazabilidad de migraciones BD.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.1",
+    "numero_hoja": "8.1",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Auditar atributos de roles, membresías y permisos accesibles.",
+    "entregable_esperado": "Matriz de roles y privilegios PostgreSQL.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.2",
+    "numero_hoja": "8.2",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Comprobar configuración SSL del servidor y cifrado de la conexión utilizada.",
+    "entregable_esperado": "Reporte técnico TLS de PostgreSQL.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.3",
+    "numero_hoja": "8.3",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Evaluar archive_mode, WAL, parámetros de archivado y señales observables de continuidad.",
+    "entregable_esperado": "Reporte de configuración WAL y archivado.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.4",
+    "numero_hoja": "8.4",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Revisar señales de replicación, slots y capacidad observable de recuperación.",
+    "entregable_esperado": "Reporte de señales de continuidad de BD.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.5",
+    "numero_hoja": "8.5",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Inventariar mecanismos de auditoría propios, extensiones y configuración de logging visible.",
+    "entregable_esperado": "Reporte técnico de trazabilidad BD.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "8.6",
+    "numero_hoja": "8.6",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Evaluar medidas técnicas observables relevantes a datos sensibles y acceso.",
+    "entregable_esperado": "Matriz técnica de protección de BD.",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.7",
+    "numero_hoja": "8.7",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Identificar información de instancia y bases visible para documentar separación lógica.",
+    "entregable_esperado": "Ficha de alcance de instancia y bases visibles.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "8.8",
+    "numero_hoja": "8.8",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Documentar evidencia del historial de migraciones accesible y sus resultados.",
+    "entregable_esperado": "Bitácora de versionado visible en BD.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "8.9",
+    "numero_hoja": "8.9",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Inventariar controles observables de modificaciones de esquema (privilegios, propietarios y logs disponibles).",
+    "entregable_esperado": "Reporte de controles técnicos de cambios BD.",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "8.10",
+    "numero_hoja": "8.10",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Evaluar capacidad y evidencias visibles de anonimización o RLS en PostgreSQL.",
+    "entregable_esperado": "Matriz técnica de medidas de protección.",
+    "prioridad": "Alta"
+  }
+]

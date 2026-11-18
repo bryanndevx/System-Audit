@@ -1,5 +1,9 @@
 # Especificación funcional — Sistema inteligente de auditoría PostgreSQL
 
+## Contrato nuevo autorizado: PostgreSQL técnico v1
+
+Para nuevas ejecuciones con `postgresql-tecnico-v1` rige [checklist-tecnico-v1.md](checklist-tecnico-v1.md) y `backend/app/technical_checklist_v1.json`: 67 requisitos reformulados de auditoría observable PostgreSQL. Los únicos estados visibles por actividad son **Completada** e **Incompleta**. Completada exige evidencia suficiente y narrativa IA válida; controles deficientes/deshabilitados no impiden evaluar. Los motivos técnicos de incompletitud se preservan internamente. La versión original y las mediciones guardadas permanecen históricas; los apartados siguientes describen el alcance previo cuando corresponda y no autorizan mezclar versiones experimentales.
+
 ## Estado
 - Prototipo visual inicial realizado en Figma. Se usa como referencia principal, no como código fuente.
 - Seis Sprints definidos. Implementación incremental, sin módulos adicionales no solicitados.

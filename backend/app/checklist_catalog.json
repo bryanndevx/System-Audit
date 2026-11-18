@@ -1,0 +1,538 @@
+[
+  {
+    "numero": "1.1",
+    "numero_hoja": "1",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Documentar stack tecnológico completo: motor de BD, versión, ORM/framework, lenguaje backend",
+    "entregable_esperado": "Ficha técnica de arquitectura",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "1.2",
+    "numero_hoja": "2",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Elaborar diagrama de arquitectura general (capas: presentación, negocio, datos, integración)",
+    "entregable_esperado": "Diagrama de arquitectura",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "1.3",
+    "numero_hoja": "3",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Identificar el tipo de arquitectura (monolito, microservicios, multi-tenant, multi-empresa)",
+    "entregable_esperado": "Nota técnica",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "1.4",
+    "numero_hoja": "4",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Mapear conexiones e integraciones externas (APIs, webhooks, otros sistemas, colas de mensajería)",
+    "entregable_esperado": "Mapa de integraciones",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "1.5",
+    "numero_hoja": "5",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Documentar ambiente(s) de despliegue: servidor, cloud/on-premise, contenedores, balanceo",
+    "entregable_esperado": "Ficha de infraestructura",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "1.6",
+    "numero_hoja": "6",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Identificar y listar esquemas/bases de datos por módulo o dominio funcional",
+    "entregable_esperado": "Mapa de esquemas",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "1.7",
+    "numero_hoja": "7",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Registrar la versión actual del modelo de datos y su historial de cambios mayores",
+    "entregable_esperado": "Bitácora de versiones",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "1.8",
+    "numero_hoja": "8",
+    "fase": "1. Arquitectura del Software",
+    "actividad": "Documentar convenciones de nomenclatura utilizadas (tablas, campos, prefijos, idioma)",
+    "entregable_esperado": "Guía de convenciones",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "2.1",
+    "numero_hoja": "1",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Listar todas las tablas existentes agrupadas por esquema/módulo funcional",
+    "entregable_esperado": "Inventario de tablas",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "2.2",
+    "numero_hoja": "2",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Clasificar cada tabla: maestra, transaccional, catálogo/parametría, auditoría, temporal/staging",
+    "entregable_esperado": "Matriz de clasificación",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "2.3",
+    "numero_hoja": "3",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Registrar volumetría actual (cantidad de registros) y tasa de crecimiento estimada",
+    "entregable_esperado": "Reporte de volumetría",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "2.4",
+    "numero_hoja": "4",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Identificar tablas obsoletas, huérfanas o sin uso activo en la aplicación",
+    "entregable_esperado": "Lista de tablas candidatas a baja",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "2.5",
+    "numero_hoja": "5",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Documentar la relación tabla ↔ módulo/funcionalidad de negocio que la origina",
+    "entregable_esperado": "Matriz tabla-módulo",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "2.6",
+    "numero_hoja": "6",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Identificar tablas de log, auditoría y trazabilidad de cambios",
+    "entregable_esperado": "Lista de tablas de auditoría",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "2.7",
+    "numero_hoja": "7",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Mapear vistas (views) existentes, su propósito y tablas origen",
+    "entregable_esperado": "Inventario de vistas",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "2.8",
+    "numero_hoja": "8",
+    "fase": "2. Inventario de Base de Datos (Tablas)",
+    "actividad": "Inventariar procedimientos almacenados, funciones y triggers, con su propósito",
+    "entregable_esperado": "Inventario de objetos programables",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.1",
+    "numero_hoja": "1",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Listar todos los campos de cada tabla con su orden y tabla de origen",
+    "entregable_esperado": "Diccionario de datos - base",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.2",
+    "numero_hoja": "2",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Documentar tipo de dato, longitud/precisión y formato de cada campo",
+    "entregable_esperado": "Diccionario de datos - tipos",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.3",
+    "numero_hoja": "3",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Registrar si el campo es obligatorio (NOT NULL) u opcional",
+    "entregable_esperado": "Diccionario de datos - obligatoriedad",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.4",
+    "numero_hoja": "4",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Documentar valores por defecto y valores permitidos (dominios, catálogos, ENUM)",
+    "entregable_esperado": "Diccionario de datos - dominios",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "3.5",
+    "numero_hoja": "5",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Identificar campos calculados, derivados o de solo lectura",
+    "entregable_esperado": "Lista de campos calculados",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "3.6",
+    "numero_hoja": "6",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Documentar la regla de negocio asociada a cada campo relevante",
+    "entregable_esperado": "Diccionario de datos - reglas de negocio",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.7",
+    "numero_hoja": "7",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Identificar campos con datos sensibles: PII, financieros, salud, credenciales",
+    "entregable_esperado": "Mapa de datos sensibles",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "3.8",
+    "numero_hoja": "8",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Estandarizar nomenclatura de campos (idioma, prefijos, sufijos, singular/plural)",
+    "entregable_esperado": "Guía de estandarización de campos",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "3.9",
+    "numero_hoja": "9",
+    "fase": "3. Documentación de Campos (Diccionario de Datos)",
+    "actividad": "Documentar campos deprecados, en desuso o pendientes de eliminación",
+    "entregable_esperado": "Lista de campos deprecados",
+    "prioridad": "Baja"
+  },
+  {
+    "numero": "4.1",
+    "numero_hoja": "1",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Inventariar todos los índices existentes por tabla (nombre, tipo, campos incluidos)",
+    "entregable_esperado": "Inventario de índices",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "4.2",
+    "numero_hoja": "2",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Verificar y documentar llave primaria y llaves foráneas de cada tabla",
+    "entregable_esperado": "Matriz de llaves PK/FK",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "4.3",
+    "numero_hoja": "3",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Evaluar índices duplicados, redundantes o no utilizados",
+    "entregable_esperado": "Reporte de índices redundantes",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "4.4",
+    "numero_hoja": "4",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Identificar tablas sin índice en campos de búsqueda o filtrado frecuente",
+    "entregable_esperado": "Lista de índices faltantes",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "4.5",
+    "numero_hoja": "5",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Analizar consultas más frecuentes/pesadas mediante query log o plan de ejecución",
+    "entregable_esperado": "Reporte de consultas críticas",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "4.6",
+    "numero_hoja": "6",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Revisar fragmentación de índices y necesidad de mantenimiento (rebuild/reorganize)",
+    "entregable_esperado": "Reporte de fragmentación",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "4.7",
+    "numero_hoja": "7",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Evaluar necesidad de índices compuestos o cubrientes (covering index)",
+    "entregable_esperado": "Propuesta de índices compuestos",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "4.8",
+    "numero_hoja": "8",
+    "fase": "4. Índices y Rendimiento",
+    "actividad": "Documentar estrategia de particionamiento de tablas de alto volumen, si aplica",
+    "entregable_esperado": "Nota de particionamiento",
+    "prioridad": "Baja"
+  },
+  {
+    "numero": "5.1",
+    "numero_hoja": "1",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Validar/actualizar el diagrama entidad-relación (ER) completo de la aplicación",
+    "entregable_esperado": "Diagrama ER actualizado",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "5.2",
+    "numero_hoja": "2",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Verificar nivel de normalización y detectar redundancias evitables",
+    "entregable_esperado": "Reporte de normalización",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "5.3",
+    "numero_hoja": "3",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Identificar relaciones huérfanas o sin llave foránea formalmente definida",
+    "entregable_esperado": "Lista de relaciones sin FK",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "5.4",
+    "numero_hoja": "4",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Revisar cardinalidad de relaciones (1:1, 1:N, N:M) y su correcta implementación",
+    "entregable_esperado": "Matriz de cardinalidad",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "5.5",
+    "numero_hoja": "5",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Validar consistencia del modelo entre módulos relacionados o compartidos",
+    "entregable_esperado": "Reporte de consistencia inter-módulos",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "5.6",
+    "numero_hoja": "6",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Identificar tablas puente/intermedias faltantes en relaciones N:M",
+    "entregable_esperado": "Lista de tablas puente pendientes",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "5.7",
+    "numero_hoja": "7",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Revisar convención de llaves primarias (autoincremental, UUID, compuesta) y su coherencia",
+    "entregable_esperado": "Nota técnica de llaves",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "5.8",
+    "numero_hoja": "8",
+    "fase": "5. Revisión del Modelo de Datos",
+    "actividad": "Validar consistencia de tipos de datos entre campos relacionados (FK vs PK)",
+    "entregable_esperado": "Reporte de inconsistencias de tipos",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "6.1",
+    "numero_hoja": "1",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Identificar consultas lentas y su causa raíz (falta de índice, mal diseño, N+1, etc.)",
+    "entregable_esperado": "Reporte de causas raíz",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "6.2",
+    "numero_hoja": "2",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Proponer particionamiento o archivado para tablas de alto volumen",
+    "entregable_esperado": "Propuesta de particionamiento/archivado",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "6.3",
+    "numero_hoja": "3",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Evaluar necesidad de vistas materializadas o tablas resumen para reportería",
+    "entregable_esperado": "Propuesta de vistas materializadas",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "6.4",
+    "numero_hoja": "4",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Revisar y optimizar procedimientos almacenados y funciones críticas",
+    "entregable_esperado": "Informe de optimización de SP/funciones",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "6.5",
+    "numero_hoja": "5",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Proponer política de archivado/purga de datos históricos",
+    "entregable_esperado": "Propuesta de retención y purga",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "6.6",
+    "numero_hoja": "6",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Evaluar uso de caché de aplicación o BD para consultas repetitivas",
+    "entregable_esperado": "Propuesta de estrategia de caché",
+    "prioridad": "Baja"
+  },
+  {
+    "numero": "6.7",
+    "numero_hoja": "7",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Revisar configuración del motor: connection pool, buffers, timeouts, memoria",
+    "entregable_esperado": "Reporte de configuración del motor",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "6.8",
+    "numero_hoja": "8",
+    "fase": "6. Optimización y Mejoras",
+    "actividad": "Priorizar mejoras identificadas mediante matriz de impacto vs. esfuerzo",
+    "entregable_esperado": "Matriz de priorización de mejoras",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "7.1",
+    "numero_hoja": "1",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Validar restricciones existentes: NOT NULL, UNIQUE, CHECK, DEFAULT",
+    "entregable_esperado": "Reporte de restricciones",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "7.2",
+    "numero_hoja": "2",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Verificar que la integridad referencial (FK) esté activa y correctamente configurada",
+    "entregable_esperado": "Reporte de integridad referencial",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "7.3",
+    "numero_hoja": "3",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Identificar registros huérfanos, duplicados o inconsistentes",
+    "entregable_esperado": "Reporte de datos huérfanos/duplicados",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "7.4",
+    "numero_hoja": "4",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Validar consistencia de datos maestros compartidos entre módulos",
+    "entregable_esperado": "Reporte de consistencia de maestros",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "7.5",
+    "numero_hoja": "5",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Revisar dónde se aplican las validaciones: a nivel de aplicación vs. a nivel de BD",
+    "entregable_esperado": "Matriz de validaciones app vs BD",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "7.6",
+    "numero_hoja": "6",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Auditar el cumplimiento de propiedades ACID en transacciones críticas",
+    "entregable_esperado": "Informe de auditoría transaccional",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "7.7",
+    "numero_hoja": "7",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Validar consistencia de fechas, rangos y reglas lógicas de negocio en los datos",
+    "entregable_esperado": "Reporte de consistencia lógica",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "7.8",
+    "numero_hoja": "8",
+    "fase": "7. Integridad de Datos",
+    "actividad": "Identificar datos inconsistentes originados por migraciones o cargas previas",
+    "entregable_esperado": "Reporte de hallazgos de migración",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.1",
+    "numero_hoja": "1",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Revisar roles, perfiles y permisos de acceso a nivel de base de datos",
+    "entregable_esperado": "Matriz de roles y permisos",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.2",
+    "numero_hoja": "2",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Validar cifrado de datos sensibles en reposo y en tránsito",
+    "entregable_esperado": "Reporte de cifrado",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.3",
+    "numero_hoja": "3",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Revisar política de respaldos (backups): frecuencia, retención y pruebas de restauración",
+    "entregable_esperado": "Política de backups validada",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.4",
+    "numero_hoja": "4",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Validar plan de recuperación ante desastres (RPO/RTO definidos y probados)",
+    "entregable_esperado": "Plan de continuidad validado",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.5",
+    "numero_hoja": "5",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Revisar logs de auditoría y trazabilidad de cambios sobre datos críticos",
+    "entregable_esperado": "Reporte de auditoría de cambios",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "8.6",
+    "numero_hoja": "6",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Validar cumplimiento normativo aplicable (Ley N.° 29733 - Perú, y normativa sectorial)",
+    "entregable_esperado": "Checklist de cumplimiento normativo",
+    "prioridad": "Alta"
+  },
+  {
+    "numero": "8.7",
+    "numero_hoja": "7",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Revisar segregación de ambientes (desarrollo, pruebas, producción)",
+    "entregable_esperado": "Reporte de segregación de ambientes",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "8.8",
+    "numero_hoja": "8",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Validar control de versiones del esquema mediante migraciones (versionado de BD)",
+    "entregable_esperado": "Reporte de versionado de esquema",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "8.9",
+    "numero_hoja": "9",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Revisar procedimiento formal de gestión de cambios (change management) sobre BD",
+    "entregable_esperado": "Procedimiento de gestión de cambios",
+    "prioridad": "Media"
+  },
+  {
+    "numero": "8.10",
+    "numero_hoja": "10",
+    "fase": "8. Seguridad y Controles",
+    "actividad": "Validar enmascaramiento/anonimización de datos sensibles en ambientes no productivos",
+    "entregable_esperado": "Reporte de enmascaramiento de datos",
+    "prioridad": "Alta"
+  }
+]

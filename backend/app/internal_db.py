@@ -6,6 +6,37 @@ import psycopg
 CONNECTION_CHECK_SQL = "SELECT current_user, current_database()"
 
 
+def _connection_error_message(error: psycopg.Error) -> str:
+    # libpq puede devolver OperationalError sin SQLSTATE durante la conexión.
+    # Se reconocen causas conocidas, sin imprimir el mensaje original ni secretos.
+    detail = str(error).casefold()
+    if error.sqlstate in {"28P01", "28000"} or any(
+        marker in detail
+        for marker in (
+            "password authentication failed",
+            "no password supplied",
+            "autentificación password falló",
+            "autenticación password falló",
+            "autentificación por contraseña falló",
+            "autenticación por contraseña falló",
+        )
+    ):
+        return "PostgreSQL rechazó la autenticación. Revise DB_USER y DB_PASSWORD."
+    if error.sqlstate == "3D000" or (
+        any(marker in detail for marker in ("database", "base de datos"))
+        and any(marker in detail for marker in ("does not exist", "no existe"))
+    ):
+        return (
+            "La base interna no existe. Revise DB_NAME y prepare la base "
+            "según LEEME_PRIMERO.md."
+        )
+    return (
+        "No fue posible verificar la conexión con la base de datos interna. "
+        "Revise el servicio PostgreSQL, DB_HOST, DB_PORT, DB_NAME, DB_USER "
+        "y DB_PASSWORD."
+    )
+
+
 class InternalDatabaseConfigurationError(ValueError):
     pass
 
@@ -31,7 +62,10 @@ class InternalDatabaseConfig:
             "DB_USER",
             "DB_PASSWORD",
         )
-        values = {name: os.getenv(name, "").strip() for name in variable_names}
+        values = {
+            name: os.getenv(name, "") if name == "DB_PASSWORD" else os.getenv(name, "").strip()
+            for name in variable_names
+        }
         missing = [name for name, value in values.items() if not value]
         if missing:
             raise InternalDatabaseConfigurationError(
@@ -74,10 +108,8 @@ def check_internal_database_connection(config: InternalDatabaseConfig) -> None:
             with connection.cursor() as cursor:
                 cursor.execute(CONNECTION_CHECK_SQL)
                 result = cursor.fetchone()
-    except psycopg.Error:
-        raise InternalDatabaseConnectionError(
-            "No fue posible verificar la conexión con la base de datos interna."
-        ) from None
+    except psycopg.Error as exc:
+        raise InternalDatabaseConnectionError(_connection_error_message(exc)) from None
 
     if result is None or len(result) != 2 or not all(result):
         raise InternalDatabaseConnectionError(

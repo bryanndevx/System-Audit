@@ -5,6 +5,8 @@ type AppShellProps = {
   children: ReactNode
   username: string
   onLogout: () => void | Promise<void>
+  serverLabel?: string
+  serverConnected?: boolean
 }
 
 function HomeIcon() {
@@ -38,7 +40,14 @@ const navigationClass = (isActive: boolean) =>
     isActive ? 'bg-[#f4f7fb] text-[#263d64]' : 'text-white/90'
   }`
 
-function AppShell({ activePage, children, username, onLogout }: AppShellProps) {
+function AppShell({
+  activePage,
+  children,
+  username,
+  onLogout,
+  serverLabel = 'No conectado',
+  serverConnected = false,
+}: AppShellProps) {
   const mobilePageLabel = activePage === 'dashboard' ? 'Dashboard' : 'Nueva auditoría'
 
   return (
@@ -82,10 +91,10 @@ function AppShell({ activePage, children, username, onLogout }: AppShellProps) {
           <div className="flex min-h-[72px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10">
             <div className="flex min-w-0 items-center gap-3">
               <span className="hidden text-xs tracking-[0.08em] text-[#687b99] uppercase sm:inline">
-                Servidor de auditoría
+                Servidor de auditoría{serverConnected ? ' activo' : ''}
               </span>
               <span className="rounded bg-[#eef3fb] px-2 py-1 text-xs font-medium text-[#536984]">
-                No conectado
+                {serverLabel}
               </span>
             </div>
 

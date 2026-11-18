@@ -21,3 +21,6 @@ coverage/
 # Datos y reportes locales (muestras reales o confidenciales)
 local-data/
 reportes-locales/
+# Documentos empresariales originales: únicamente referencia local
+docs/documentacion.docx
+frontend/referencias/checklist_bd_smardent.xlsx

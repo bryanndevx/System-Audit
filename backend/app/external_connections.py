@@ -23,7 +23,8 @@ STATEMENT_TIMEOUT_MILLISECONDS = 3_000
 TOTAL_OPERATION_TIMEOUT_SECONDS = 10
 SESSION_OPTIONS = (
     "-c default_transaction_read_only=on "
-    f"-c statement_timeout={STATEMENT_TIMEOUT_MILLISECONDS}"
+    f"-c statement_timeout={STATEMENT_TIMEOUT_MILLISECONDS} "
+    "-c search_path=pg_catalog"
 )
 HOST_LABEL_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
 
@@ -59,6 +60,17 @@ class InsufficientDatabasePrivilegesError(PermissionError):
     pass
 
 
+class ElevatedPrivilegesConfirmationRequired(InsufficientDatabasePrivilegesError):
+    """Cuenta válida que necesita aceptación explícita de sus privilegios."""
+
+    def __init__(self, attributes):
+        self.continuation_allowed = not attributes[0]
+        self.privileges = [name for name, enabled in zip(
+            ("Superusuario", "Crear roles", "Crear bases de datos", "Replicación", "Omitir seguridad por filas"), attributes
+        ) if enabled]
+        super().__init__("El usuario es superusuario. Utilice una cuenta de lectura para auditar." if not self.continuation_allowed else "El usuario tiene privilegios elevados. Cambie a una cuenta de lectura o confirme que desea continuar.")
+
+
 def _normalize_host(value: str) -> str:
     if value != value.strip():
         raise ValueError("El host no puede tener espacios al inicio o al final.")
@@ -86,6 +98,7 @@ class ExternalConnectionRequest(BaseModel):
     database: str = Field(min_length=1, max_length=63)
     username: str = Field(min_length=1, max_length=63)
     password: SecretStr = Field(min_length=1, max_length=1024)
+    confirmar_privilegios_elevados: bool = Field(default=False, strict=True)
 
     @field_validator("host")
     @classmethod
@@ -322,14 +335,12 @@ async def open_verified_external_connection(
 
             await cursor.execute(ROLE_ATTRIBUTES_SQL)
             role_attributes = await cursor.fetchone()
-            if role_attributes is None or len(role_attributes) != 5:
+            if role_attributes is None or len(role_attributes) != 5 or any(type(value) is not bool for value in role_attributes):
                 raise InsufficientDatabasePrivilegesError(
                     "No fue posible verificar los atributos del usuario."
                 )
-            if any(role_attributes):
-                raise InsufficientDatabasePrivilegesError(
-                    "El usuario posee atributos elevados no permitidos."
-                )
+            if role_attributes[0] or (any(role_attributes) and not connection_request.confirmar_privilegios_elevados):
+                raise ElevatedPrivilegesConfirmationRequired(role_attributes)
         await connection.rollback()
         validation_complete = True
         try:
@@ -401,6 +412,11 @@ async def test_external_connection(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="El usuario no dispone del acceso básico de lectura requerido.",
         ) from exc
+    except ElevatedPrivilegesConfirmationRequired as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "elevated_privileges_confirmation_required",
+            "message": str(exc), "privileges": exc.privileges, "continuation_allowed": exc.continuation_allowed,
+        }) from None
     except InsufficientDatabasePrivilegesError as exc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

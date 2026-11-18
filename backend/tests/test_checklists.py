@@ -1,4 +1,5 @@
 import asyncio
+import secrets
 import unittest
 from io import BytesIO
 from unittest.mock import patch
@@ -13,6 +14,8 @@ from app.checklists import (
     import_checklist,
     parse_checklist,
 )
+from app.audit_engine import ChecklistActivityReference
+from app.audits import AuditExecutionRequest
 
 
 def build_workbook(
@@ -34,6 +37,64 @@ def build_workbook(
 
 
 class ParseChecklistTests(unittest.TestCase):
+    def test_imported_checklist_at_limits_is_accepted_by_execution_model(self):
+        content = build_workbook([
+            ("F" * 250, str(index).zfill(50), "A" * 500, None, None, None, None, None)
+            for index in range(1, 101)
+        ])
+        result = parse_checklist(content, "limite.xlsx")
+        activities = [
+            ChecklistActivityReference(
+                numero=activity.numero, actividad=activity.actividad, fase=phase.nombre,
+            )
+            for phase in result.fases for activity in phase.actividades
+        ]
+        self.assertEqual(len(activities), 100)
+        request = AuditExecutionRequest.model_validate({
+            "conexion": {
+                "host": "localhost", "port": 5432, "database": "test_db",
+                "username": "test_reader", "password": secrets.token_urlsafe(20),
+            },
+            "actividades": activities,
+        })
+        self.assertEqual(len(request.actividades), 100)
+
+    def test_rejects_checklist_over_execution_limit_without_truncating(self):
+        content = build_workbook([
+            ("Fase", index, "Actividad", None, None, None, None, None)
+            for index in range(1, 102)
+        ])
+        upload = UploadFile(
+            file=BytesIO(content), filename="grande.xlsx",
+            headers=Headers({"content-type": "application/octet-stream"}),
+        )
+        with self.assertRaises(HTTPException) as raised:
+            asyncio.run(import_checklist(upload))
+        self.assertEqual(raised.exception.status_code, 422)
+        self.assertIn("100 actividades", raised.exception.detail)
+
+    def test_rejects_text_beyond_execution_limits_with_row_number(self):
+        for phase, number, name, expected in (
+            ("Fase", "1" * 51, "Actividad", "identificador"),
+            ("Fase", "1", "A" * 501, "nombre de actividad"),
+            ("F" * 251, "1", "Actividad", "nombre de fase"),
+        ):
+            with self.subTest(field=expected):
+                content = build_workbook([(phase, number, name, None, None, None, None, None)])
+                with self.assertRaises(ChecklistValidationError) as raised:
+                    parse_checklist(content, "largo.xlsx")
+                self.assertIn(expected, str(raised.exception))
+                self.assertIn("fila 2", str(raised.exception))
+
+    def test_validates_inherited_phase_and_expanded_identifier_lengths(self):
+        for rows, expected_row in (
+            ([("F" * 251, None, None), (None, "1", "Actividad")], "fila 3"),
+            ([("12. Fase", "1" * 49, "Actividad")], "fila 2"),
+        ):
+            with self.subTest(rows=rows):
+                with self.assertRaisesRegex(ChecklistValidationError, expected_row):
+                    parse_checklist(build_workbook(rows), "fases.xlsx")
+
     def test_groups_activities_and_inherits_phase(self):
         content = build_workbook(
             [
@@ -71,6 +132,26 @@ class ParseChecklistTests(unittest.TestCase):
         self.assertEqual(
             [phase.actividades[0].actividad for phase in result.fases],
             ["Actividad A1", "Actividad B1", "Actividad A2"],
+        )
+
+    def test_builds_hierarchical_identifiers_when_numbering_restarts_by_phase(self):
+        content = build_workbook(
+            [
+                ("1. Primera fase", 1, "Actividad A", None, None, None, None, None),
+                (None, 2, "Actividad B", None, None, None, None, None),
+                ("2. Segunda fase", 1, "Actividad C", None, None, None, None, None),
+            ]
+        )
+
+        result = parse_checklist(content, "checklist.xlsx")
+
+        self.assertEqual(
+            [
+                activity.numero
+                for phase in result.fases
+                for activity in phase.actividades
+            ],
+            ["1.1", "1.2", "2.1"],
         )
 
     def test_rejects_missing_required_sheet(self):
